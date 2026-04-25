@@ -1,0 +1,298 @@
+//Default Route
+###
+GET http://localhost:5000/
+
+//---users---
+// Get all users (admin only)
+###
+GET http://localhost:5000/api/users
+
+
+// Get users by Id (all users)
+###
+GET http://localhost:5000/api/users/1
+
+
+//create a user (all users)
+###
+POST http://localhost:5000/api/auth/register
+content-type: application/json
+
+{
+    "userName": "Admin",
+    "email": "admin@gmail.com",
+    "password": "admin123",
+    "contactPhone": "07681361",
+    "address":"211 mombasa"
+}
+
+//Login user
+###
+POST http://localhost:5000/api/auth/login
+content-type : application/json
+
+{
+    "email": "kephaascah00@gmail.com",
+    "password": "Aska123"
+}
+
+// Update a user (all users)
+###
+PUT http://localhost:5000/api/users/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "firstName": "Joshua",
+  "lastName": "Smith"
+}
+
+// Delete a user (admin only)
+###
+DELETE http://localhost:5000/api/users/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+//...checkins---
+// Get all checkins (admin only)
+###
+GET http://localhost:5000/api/checkins
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Get checkins by ID (all users)
+###
+GET http://localhost:5000/api/checkins/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Create a checkins (patient only)
+###
+POST http://localhost:5000/api/checkins
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoia2VwaGFhc2NhaDAwQGdtYWlsLmNvbSIsInVzZXJOYW1lIjoiQXNrYSIsInVzZXJUeXBlIjoicGF0aWVudCIsImV4cCI6MTc3NjM1MTY4MiwiaWF0IjoxNzc2MzQ4MDgyfQ.eG1wr6j4SBz8S4IEKfwJlTfQOxyJZ_6QPLibrke-GEs
+
+{
+  "userId": 1,
+  "cravings": 3,
+  "control": 4,
+  "selfEfficacy": 5,
+  "consequences": false,
+  "copingUsed": true,
+  "notes": "Had a strong urge today but used deep breathing exercises. Feeling better now."
+}
+
+// Update a checkins(admin only)
+###
+PUT http://localhost:5000/api/checkins/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "userId": 1,
+  "cravings": 2,
+  "control": 8,
+  "selfEfficacy": 7,
+  "consequences": false,
+  "copingUsed": true,
+  "notes": "Had a strong urge today but used deep breathing exercises. Feeling better now."
+}
+
+// Delete a checkins (admin only) 
+###
+DELETE http://localhost:5000/api/checkins/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+//---riskscore---
+
+// Get all riskscore (admin only)
+###
+GET http://localhost:5000/api/riskscore
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Get riskscore by ID (all users)
+###
+GET http://localhost:5000/api/riskscore/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Create a riskscore (admin only)
+# ###
+# POST http://localhost:5000/api/riskscore
+# content-Type: application/json
+# Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTIwNTQ0ODIsImlhdCI6MTc1MjA1MDg4Mn0.1Yav1Fbwx59RFiqwzcrCGFWiFZy-5vrDsbmRXd-XioQ
+
+# {
+#   "userId": 3,
+# }
+
+// Update a riskscore (admin only)
+###
+PUT http://localhost:5000/api/riskscore/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "userId": "1",
+  "score": "2",
+  "riskLevel": "High"
+}
+
+// Delete a riskscore (admin only)
+###
+DELETE http://localhost:5000/api/riskscore/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+
+
+//---support partners---
+// Get all supportpartners(admin only)
+###
+GET http://localhost:5000/api/supportpartner
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Get supportpartners by ID (all users)
+###
+GET http://localhost:5000/api/supportpartner/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Create a supportpartners (patient only)
+###
+POST http://localhost:5000/api/supportpartner
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoia2VwaGFhc2NhaDAwQGdtYWlsLmNvbSIsInVzZXJOYW1lIjoiQXNrYSIsInVzZXJUeXBlIjoicGF0aWVudCIsImV4cCI6MTc3NjM1MTY4MiwiaWF0IjoxNzc2MzQ4MDgyfQ.eG1wr6j4SBz8S4IEKfwJlTfQOxyJZ_6QPLibrke-GEs
+
+{
+  "userId": 1,
+  "partnerName": "Saven",
+  "contactInfo": "072345567",
+  "relationship": "Friend"
+}
+
+// Update a supportpartner(patient only)
+###
+PUT http://localhost:5000/api/supportpartner/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "userId": 1,
+  "partnerName": "Saaven",
+  "contactInfo": "072345567",
+  "relationship": "Friend",
+}
+
+// Delete a supportpartner (admin only) 
+###
+DELETE http://localhost:5000/api/supportpartner/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+
+//---Actions---
+// Get all actions(admin only)
+###
+GET http://localhost:5000/api/actions
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Get actions by ID (all users)
+###
+GET http://localhost:5000/api/actions/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Create an action (supportpartner only)
+###
+POST http://localhost:5000/api/actions
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "userId": 1,
+  "partnerId": 1,
+  "success": "true",
+  "actionDescription": "Used deep breathing exercises to manage cravings.",
+}
+
+// Update actions(supportpartner only)
+###
+PUT http://localhost:5000/api/actions/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "userId": 1,
+  "partnerId": 1,
+  "success": "true",
+  "actionDescription": "Deep breathing exercises to manage cravings.",
+}
+
+// Delete action (admin only) 
+###
+DELETE http://localhost:5000/api/actions/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+
+//---chatRoom---
+// Get all chatrooms(admin only)
+###
+GET http://localhost:5000/api/chatroom
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Get chatroom by ID (all users)
+###
+GET http://localhost:5000/api/chatroom/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Create a chatroom (admin only)
+###
+POST http://localhost:5000/api/chatroom
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "isPersistent": 1,
+  "description": "Saven"
+}
+
+// Update a chatroom(admin only)
+###
+PUT http://localhost:5000/api/chatroom/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "isPersistent": 1,
+  "description": "Saven"
+}
+
+// Delete a chatroom (admin only) 
+###
+DELETE http://localhost:5000/api/chatroom/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+
+//---messages---
+
+// Get all messages(admin only)
+###
+GET http://localhost:5000/api/messages
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Get messages by ID (all users)
+###
+GET http://localhost:5000/api/messages/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+// Create a messages (all users)
+###
+POST http://localhost:5000/api/messages
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "roomId": 1,
+  "message": "Hello, how are you doing today?"
+}
+
+// Update a messages(all users)
+###
+PUT http://localhost:5000/api/messages/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0
+
+{
+  "message": "Actually, I'm having an AMAZING day! ✨"
+}
+
+// Delete a messages (admin only) 
+###
+DELETE http://localhost:5000/api/messages/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiam9zaHVhQG1haWwuY29tIiwiZmlyc3ROYW1lIjoiSm9zaHVhIiwibGFzdE5hbWUiOiJTbWl0aCIsInVzZXJUeXBlIjoiYWRtaW4iLCJleHAiOjE3NTE4MDI5NzUsImlhdCI6MTc1MTc5OTM3NX0.SWn1NqL6OWbP3oze2Rj3yYPD--4via3FQw9WrMq-kx0

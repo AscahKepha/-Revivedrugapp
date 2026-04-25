@@ -1,0 +1,37 @@
+import React from 'react';
+import Container from '../Container'; // Keeping everything aligned
+
+export const IntroS: React.FC = () => {
+    return (
+        <section className="py-12 bg-white">
+            <Container>
+                <div className="text-center md:text-left max-w-3xl">
+                    {/* The "Cute" Title */}
+                    <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
+                        <span className="text-teal-600">Drug-</span>
+                        <span className="text-emerald-400">Revive</span>
+                        <span className="inline-block animate-bounce ml-2 text-2xl">🌱</span>
+                    </h1>
+
+                    {/* The Warm & Supportive Words */}
+                    <div className="space-y-4">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 italic">
+                            Your journey back to <span className="text-teal-500 underline decoration-emerald-200 decoration-4">you</span> starts here.
+                        </h2>
+                        
+                        <p className="text-gray-600 text-lg md:text-xl leading-relaxed font-medium">
+                            Welcome to your safe space. Whether you're here to track your progress, 
+                            find a support partner, or just take a breath—we've got your back. 
+                            Let's walk this path to wellness together, one small win at a time. ✨
+                        </p>
+                    </div>
+
+                    {/* Small decorative line */}
+                    <div className="mt-8 h-1.5 w-24 bg-gradient-to-r from-teal-400 to-emerald-300 rounded-full"></div>
+                </div>
+            </Container>
+        </section>
+    );
+};
+
+export default IntroS;

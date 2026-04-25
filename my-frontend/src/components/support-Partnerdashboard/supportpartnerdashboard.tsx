@@ -1,0 +1,112 @@
+import React from 'react';
+import { Users, AlertCircle, Calendar, MessageSquare, ArrowUpRight, Activity } from 'lucide-react';
+import { Button } from '../ui/button';
+
+const PartnerDashboard = () => {
+  return (
+    <div className="min-h-screen bg-gray-50/50 p-6 md:p-10">
+      <div className="max-w-7xl mx-auto space-y-10">
+        
+        {/* Header Section */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tighter">PARTNER HUB</h1>
+            <p className="text-gray-500 font-medium">Monitoring recovery progress for assigned patients.</p>
+          </div>
+          <div className="flex gap-3">
+            <Button className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-2xl shadow-sm">
+              <Calendar size={18} className="mr-2 text-emerald-600" /> Schedule
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-100">
+              <MessageSquare size={18} className="mr-2" /> Broadcast Alert
+            </Button>
+          </div>
+        </header>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard icon={<Users />} label="Assigned Patients" value="12" color="bg-blue-500" />
+          <StatCard icon={<AlertCircle />} label="Critical Alerts" value="02" color="bg-red-500" />
+          <StatCard icon={<Activity />} label="Check-ins Today" value="08" color="bg-emerald-500" />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Patient Watchlist (Takes 2 columns) */}
+          <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Watchlist</h3>
+              <button className="text-emerald-600 font-bold text-xs uppercase tracking-widest hover:underline">View All</button>
+            </div>
+            
+            <div className="space-y-4">
+              <PatientRow name="John Doe" status="Stable" lastSeen="2h ago" mood="Calm" />
+              <PatientRow name="Jane Smith" status="High Craving" lastSeen="15m ago" mood="Anxious" isAlert />
+              <PatientRow name="Alex Munene" status="Stable" lastSeen="5h ago" mood="Motivated" />
+            </div>
+          </div>
+
+          {/* Quick Intervention / Tasks */}
+          <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-xl">
+            <h3 className="text-xl font-black uppercase tracking-tight mb-6">Intervention Queue</h3>
+            <div className="space-y-6">
+              <TaskItem title="Review Jane's Log" time="Due in 10m" type="Review" />
+              <TaskItem title="Monthly Report UoN" time="Due Tomorrow" type="Admin" />
+              <div className="pt-6 border-t border-white/10 mt-6">
+                 <p className="text-[10px] font-black uppercase text-emerald-400 mb-4 tracking-[0.2em]">Resource Quick-Access</p>
+                 <div className="grid grid-cols-2 gap-3">
+                   <button className="bg-white/5 hover:bg-white/10 p-3 rounded-2xl text-xs font-bold transition-all text-left">Counseling PDF</button>
+                   <button className="bg-white/5 hover:bg-white/10 p-3 rounded-2xl text-xs font-bold transition-all text-left">Emergency Protocol</button>
+                 </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Helper Components
+const StatCard = ({ icon, label, value, color }: any) => (
+  <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center gap-5">
+    <div className={`${color} p-4 rounded-2xl text-white shadow-lg`}>{icon}</div>
+    <div>
+      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{label}</p>
+      <p className="text-3xl font-black text-gray-900">{value}</p>
+    </div>
+  </div>
+);
+
+const PatientRow = ({ name, status, lastSeen, mood, isAlert }: any) => (
+  <div className={`flex items-center justify-between p-5 rounded-3xl border transition-all hover:shadow-md ${isAlert ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
+    <div className="flex items-center gap-4">
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${isAlert ? 'bg-red-500 text-white' : 'bg-emerald-100 text-emerald-700'}`}>
+        {name.charAt(0)}
+      </div>
+      <div>
+        <p className="font-bold text-gray-900">{name}</p>
+        <p className={`text-xs font-bold uppercase tracking-tighter ${isAlert ? 'text-red-600' : 'text-gray-400'}`}>{status}</p>
+      </div>
+    </div>
+    <div className="text-right hidden md:block">
+      <p className="text-xs font-black text-gray-400 uppercase">Last Sync</p>
+      <p className="font-bold text-gray-900 text-sm">{lastSeen}</p>
+    </div>
+    <Button variant="ghost" size="sm" className="rounded-xl"><ArrowUpRight size={18} /></Button>
+  </div>
+);
+
+const TaskItem = ({ title, time, type }: any) => (
+  <div className="group cursor-pointer">
+    <div className="flex justify-between items-start mb-1">
+      <p className="font-bold text-sm group-hover:text-emerald-400 transition-colors">{title}</p>
+      <span className="text-[10px] font-black text-emerald-500 uppercase">{type}</span>
+    </div>
+    <p className="text-xs text-gray-500">{time}</p>
+  </div>
+);
+
+export default PartnerDashboard;
