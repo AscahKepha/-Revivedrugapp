@@ -35,6 +35,6 @@ app.use('/api', RiskScoreRouter)
 app.use('/api', MessagesRouter)
 app.use('/api', CheckinsRouter)
 app.use('/api', ChatRoomsRouter)
-app.use('/api', authRouter)
+app.use('/api/auth', authRouter)
 
 export default app;

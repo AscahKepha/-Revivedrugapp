@@ -1,6 +1,5 @@
-// src/redux/authSlice.ts
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { type UserProfile, type UserRole } from "../../types/auth"; // Import from source
+import { type UserProfile, type UserRole } from "../../types/auth";
 
 interface AuthState {
   user: UserProfile | null;
@@ -9,9 +8,19 @@ interface AuthState {
   userType: UserRole | null;
 }
 
-// Pull from localStorage so users stay logged in on refresh
+// Helper to safely parse localStorage
+const getStoredUser = (): UserProfile | null => {
+  try {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch (error) {
+    console.error("Failed to parse user from localStorage", error);
+    return null;
+  }
+};
+
 const initialState: AuthState = {
-  user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null,
+  user: getStoredUser(),
   token: localStorage.getItem("token") || null,
   isAuthenticated: !!localStorage.getItem("token"),
   userType: (localStorage.getItem("userType") as UserRole) || null,
@@ -21,24 +30,34 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    /**
+     * Called automatically by authApi (via onQueryStarted) 
+     * on successful Login or Registration.
+     */
     setCredentials: (state, action: PayloadAction<{ user: UserProfile; token: string }>) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      const { user, token } = action.payload;
+      
+      state.user = user;
+      state.token = token;
       state.isAuthenticated = true;
-      state.userType = action.payload.user.userType;
+      state.userType = user.userType;
 
-      // Save to localStorage for persistence
-      localStorage.setItem("token", action.payload.token);
-      localStorage.setItem("user", JSON.stringify(action.payload.user));
-      localStorage.setItem("userType", action.payload.user.userType);
+      // Persistence Layer
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("userType", user.userType);
     },
+
+    /**
+     * Clears all auth data. Use this for Logout buttons.
+     */
     clearCredentials: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
       state.userType = null;
 
-      // Wipe localStorage
+      // Wipe persistence
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("userType");

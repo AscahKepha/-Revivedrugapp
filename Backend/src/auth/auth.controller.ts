@@ -3,24 +3,67 @@ import bcrypt from "bcrypt";
 import { createUserService, getUserByEmailService } from "./auth.service";
 import jwt from "jsonwebtoken";
 
+const JWT_SECRET = process.env.JWT_SECRET as string;
+
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = req.body;
-        
-        if (!user.userName || !user.email || !user.password || !user.contactPhone || !user.address) {
-            res.status(400).json({ error: "All fields are required" });
+        const { firstName, lastName, email, password, contactPhone, address, role } = req.body;
+
+        // 1. Validation based on your Drizzle schema and Frontend requirements
+        if (!firstName || !lastName || !email || !password || !contactPhone) {
+            res.status(400).json({ message: "Missing required fields" });
             return;
         }
 
-        // Generate hashed password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(user.password, salt);
-        user.password = hashedPassword;
+        // 2. Check if user already exists
+        const existingUser = await getUserByEmailService(email);
+        if (existingUser) {
+            res.status(409).json({ message: "User with this email already exists" });
+            return;
+        }
 
-        const newUser = await createUserService(user);
-        res.status(201).json({ message: "User created successfully", user: newUser });
+        // 3. Prepare data for Drizzle Table
+        // Combining names to match the 'userName' column in your schema
+        const fullName = `${firstName} ${lastName}`;
+        
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const userData = {
+            userName: fullName,
+            email,
+            password: hashedPassword,
+            contactPhone,
+            address: address || null,
+            userType: role || "patient", // Matches roleEnum in your schema
+        };
+
+        // 4. Save to Database
+        const newUser = await createUserService(userData);
+
+        // 5. Generate Token so they are logged in immediately after registration
+        const payload = {
+            userId: newUser.userId,
+            email: newUser.email,
+            userType: newUser.userType,
+        };
+
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+
+        // 6. Response (matches BackendLoginResponse type on frontend)
+        res.status(201).json({
+            message: "User created successfully",
+            token,
+            user: {
+                userId: newUser.userId,
+                userName: newUser.userName,
+                email: newUser.email,
+                userType: newUser.userType,
+                contactPhone: newUser.contactPhone,
+                address: newUser.address
+            }
+        });
     } catch (error: any) {
-        // Pass the error to the global error handler
         next(error);
     }
 };
@@ -32,36 +75,33 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         const existingUser = await getUserByEmailService(email);
         
         if (!existingUser) {
-            res.status(404).json({ message: "User not found" });
+            res.status(404).json({ message: "Invalid email or password" });
             return;
         }
 
         const isMatchPasswords = await bcrypt.compare(password, existingUser.password);
         if (!isMatchPasswords) {
-            res.status(401).json({ message: "Invalid password" });
+            res.status(401).json({ message: "Invalid email or password" });
             return;
         }
 
-        // Generate token 
         const payload = {
             userId: existingUser.userId,
             email: existingUser.email,
-            userName: existingUser.userName,
             userType: existingUser.userType,
         };
 
-        const secret = process.env.JWT_SECRET as string;
-        
-        // jwt.sign handles the 'exp' internally if you pass 'expiresIn'
-        const token = jwt.sign(payload, secret, { expiresIn: '1h' });
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
         res.status(200).json({
             token,
             user: {
                 userId: existingUser.userId,
-                email: existingUser.email,
                 userName: existingUser.userName,
-                userType: existingUser.userType
+                email: existingUser.email,
+                userType: existingUser.userType,
+                contactPhone: existingUser.contactPhone,
+                address: existingUser.address
             }
         });
     } catch (error: any) {

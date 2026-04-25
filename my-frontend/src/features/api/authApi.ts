@@ -1,15 +1,15 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { type BackendLoginResponse, type LoginCredentials, type RegisterCredentials } from "../../types/auth";
-import { setCredentials } from "../auth/authSlice"; // Import your action
-import type { RootState } from "../../app/store"; // We'll define this in the store file
- // We'll define this in the store file
+import { setCredentials } from "../auth/authSlice"; 
+import type { RootState } from "../../app/store";
 
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3000/api/auth", 
+    // Updated port to 5000 as requested
+    baseUrl: "http://localhost:5000/api/auth", 
     prepareHeaders: (headers, { getState }) => {
-      // Automatically attach Bearer token to all requests if it exists
+      // Automatically attach Bearer token to all requests if it exists in Redux state
       const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set("authorization", `Bearer ${token}`);
@@ -25,7 +25,7 @@ export const authApi = createApi({
         method: "POST",
         body: credentials,
       }),
-      // Sync backend response with authSlice automatically
+      // Automatically syncs state on success
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -37,12 +37,21 @@ export const authApi = createApi({
     }),
 
     // Register Mutation
-    registerUser: builder.mutation<any, RegisterCredentials>({
+    registerUser: builder.mutation<BackendLoginResponse, RegisterCredentials>({
       query: (userData) => ({
         url: "/register",
         method: "POST",
         body: userData,
       }),
+      // Added automatic login after successful registration
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setCredentials({ user: data.user, token: data.token }));
+        } catch (error) {
+          console.error("Registration sync failed:", error);
+        }
+      },
     }),
   }),
 });

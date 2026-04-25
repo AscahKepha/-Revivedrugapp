@@ -8,13 +8,13 @@ import { supportPartnerRoutes } from './routes/supportpartnerRoutes';
 // Public Pages
 import Login from './pages/Login';
 import Signin from './pages/Signin';
-import LandingPage from './pages/LandingPage';
+import { Home } from './pages/Home';
 
 const router = createBrowserRouter([
   // 1. Public Routes
   {
     path: "/",
-    element: <LandingPage />,
+    element: <Home />,
   },
   {
     path: "/login",

@@ -3,24 +3,26 @@ import { FaUserCircle, FaFacebookF, FaYoutube, FaTwitter, FaInstagram, FaLinkedi
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useRegisterUserMutation } from "../features/api/userApi";
+import { useRegisterUserMutation } from "../features/api/authApi";
 import { setCredentials } from "../features/auth/authSlice";
-import { toast } from 'sonner'; // Switched to sonner
+import toast from 'react-hot-toast';
 
 export const Signin: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // State Management
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // Roles updated to match your schema
   const [role, setRole] = useState<'admin' | 'support_partner' | 'patient'>('patient');
   const [contactPhone, setContactPhone] = useState('');
   const [address, setAddress] = useState('');
 
   const [registerError, setRegisterError] = useState<string | null>(null);
+
+  // RTK Query Mutation (Points to http://localhost:5000/api/auth/register)
   const [registerUser, { isLoading: isRegistering }] = useRegisterUserMutation();
 
   const handleRegister = async (event: React.FormEvent) => {
@@ -28,6 +30,7 @@ export const Signin: React.FC = () => {
     setRegisterError(null);
 
     try {
+      // Send data to backend - roles match your Drizzle schema
       const response = await registerUser({
         firstName,
         lastName,
@@ -38,15 +41,19 @@ export const Signin: React.FC = () => {
         address,
       }).unwrap();
 
+      // Update Redux state with the user and token returned from backend
       dispatch(setCredentials({
         token: response.token,
         user: response.user,
       }));
 
       toast.success("Registration successful! Welcome to the revival.");
-      navigate('/login'); 
+
+      // Navigate straight to dashboard since the user is already authenticated
+      navigate('/dashboard');
 
     } catch (error: any) {
+      // Safely extract error message from backend response
       const message = error?.data?.message || "An error occurred during registration.";
       setRegisterError(message);
       toast.error(message);
@@ -75,6 +82,7 @@ export const Signin: React.FC = () => {
           </div>
 
           <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleRegister}>
+            {/* First Name */}
             <div className="space-y-1">
               <label htmlFor="firstname" className="block text-sm font-semibold text-gray-700">First Name</label>
               <input
@@ -89,6 +97,7 @@ export const Signin: React.FC = () => {
               />
             </div>
 
+            {/* Last Name */}
             <div className="space-y-1">
               <label htmlFor='lastname' className='block text-sm font-semibold text-gray-700'>Last Name</label>
               <input
@@ -103,6 +112,7 @@ export const Signin: React.FC = () => {
               />
             </div>
 
+            {/* Email */}
             <div className="md:col-span-2 space-y-1">
               <label htmlFor='email' className='block text-sm font-semibold text-gray-700'>Email Address</label>
               <input
@@ -117,6 +127,7 @@ export const Signin: React.FC = () => {
               />
             </div>
 
+            {/* Password */}
             <div className="space-y-1">
               <label htmlFor='password' className='block text-sm font-semibold text-gray-700'>Password</label>
               <input
@@ -131,11 +142,13 @@ export const Signin: React.FC = () => {
               />
             </div>
 
+            {/* Phone */}
             <div className="space-y-1">
               <label htmlFor='contactPhone' className='block text-sm font-semibold text-gray-700'>Phone Number</label>
               <input
                 id='contactPhone'
                 type='tel'
+                required
                 placeholder="+254..."
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
@@ -144,11 +157,13 @@ export const Signin: React.FC = () => {
               />
             </div>
 
+            {/* Address */}
             <div className="md:col-span-2 space-y-1">
               <label htmlFor='address' className='block text-sm font-semibold text-gray-700'>Residential Address</label>
               <input
                 id='address'
                 type='text'
+                required
                 placeholder="City, Estate"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -157,6 +172,7 @@ export const Signin: React.FC = () => {
               />
             </div>
 
+            {/* Role Selection */}
             <div className="md:col-span-2 space-y-1">
               <label htmlFor='role' className='block text-sm font-semibold text-gray-700'>Register as</label>
               <select
@@ -172,12 +188,14 @@ export const Signin: React.FC = () => {
               </select>
             </div>
 
+            {/* Error Message Display */}
             {registerError && (
               <div className="md:col-span-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center border border-red-100 font-medium">
                 {registerError}
               </div>
             )}
 
+            {/* Submit Buttons */}
             <div className="md:col-span-2 pt-4 flex flex-col space-y-3">
               <button
                 type="submit"
@@ -211,7 +229,7 @@ export const Signin: React.FC = () => {
             <h2 className="text-2xl font-bold">Stay Connected</h2>
             <p className="text-teal-100 text-sm">Join our community across social platforms for daily motivation and support.</p>
           </div>
-          
+
           <div className="flex flex-col space-y-6">
             {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube].map((Icon, index) => (
               <a key={index} href="#" target="_blank" rel="noopener noreferrer"

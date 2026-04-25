@@ -5,7 +5,6 @@ import {
   Users, 
   ClipboardCheck, 
   BarChart3, 
-  UserCircle, 
   HeartPulse,
   Menu,
   X
@@ -21,7 +20,7 @@ const navItems = [
   { to: '/patient/support-circle', icon: <Users size={20} />, label: 'Support Circle' },
   { to: '/patient/check-in', icon: <ClipboardCheck size={20} />, label: 'Daily Check-in' },
   { to: '/patient/scores', icon: <BarChart3 size={20} />, label: 'Recovery Scores' },
-  { to: '/patient/profile', icon: <UserCircle size={20} />, label: 'My Profile' },
+  // { to: '/patient/profile', icon: <UserCircle size={20} />, label: 'My Profile' },
 ];
 
 const PatientLayout: React.FC = () => {

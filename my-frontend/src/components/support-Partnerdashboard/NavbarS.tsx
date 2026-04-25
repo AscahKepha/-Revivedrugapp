@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserCircle, 
-  LogOut, 
-  Bell, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Users,
+  UserCircle,
+  LogOut,
+  Bell,
+  Menu,
   X,
   ShieldCheck,
   HeartHandshake
@@ -40,7 +40,7 @@ const NavbarS = () => {
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
-          
+
           {/* Logo Section */}
           <div className="flex items-center gap-2">
             <div className="bg-emerald-600 p-2 rounded-xl shadow-lg shadow-emerald-100">
@@ -62,11 +62,10 @@ const NavbarS = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                  isActive(link.path)
-                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isActive(link.path)
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
               >
                 {link.icon}
                 {link.name}
@@ -76,13 +75,12 @@ const NavbarS = () => {
             <div className="h-8 w-[1px] bg-gray-100 mx-2" />
 
             {/* Profile Dropdown Trigger / Avatar */}
-            <Link 
+            <Link
               to="/support-partner/profile"
-              className={`flex items-center gap-3 p-1 pr-4 rounded-2xl transition-all ${
-                isActive('/support-partner/profile') 
-                ? 'bg-gray-900 text-white' 
+              className={`flex items-center gap-3 p-1 pr-4 rounded-2xl transition-all ${isActive('/support-partner/profile')
+                ? 'bg-gray-900 text-white'
                 : 'hover:bg-gray-50 text-gray-700'
-              }`}
+                }`}
             >
               <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-emerald-100 bg-emerald-50 flex items-center justify-center">
                 {user?.profile_picture ? (
@@ -102,7 +100,7 @@ const NavbarS = () => {
               </div>
             </Link>
 
-            <button 
+            <button
               onClick={handleLogout}
               className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
               title="Logout"
@@ -131,19 +129,18 @@ const NavbarS = () => {
               key={link.path}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 p-4 rounded-2xl font-bold ${
-                isActive(link.path) ? 'bg-emerald-600 text-white' : 'text-gray-600 bg-gray-50'
-              }`}
+              className={`flex items-center gap-3 p-4 rounded-2xl font-bold ${isActive(link.path) ? 'bg-emerald-600 text-white' : 'text-gray-600 bg-gray-50'
+                }`}
             >
               {link.icon}
               {link.name}
             </Link>
           ))}
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full p-4 rounded-2xl font-bold text-red-600 bg-red-50"
           >
-            <LogOut size={18} /> Logout
+            <LogOut size={18} /> Logouthhhh
           </button>
         </div>
       )}

@@ -5,7 +5,6 @@ import {
   History, 
   Activity, 
   UserCog, 
-  HeartPulse,
   Menu,
   X,
   Users
