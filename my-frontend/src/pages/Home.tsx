@@ -1,6 +1,6 @@
 import React from "react";
 // import Container from '../components/container';
-import { NavbarH } from "../components/Home/Navbarh"; // Unleashed!
+import { NavbarH } from "../components/Home/Navbarhome"; // Unleashed!
 import { Hero } from '../components/Home/Hero';
 import { Footerh } from '../components/Home/Footerh';
 import { About } from '../components/Home/About';

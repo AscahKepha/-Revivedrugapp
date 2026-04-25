@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
     FaStethoscope, FaBrain, FaDollarSign, FaBookOpen, 
     FaCalendarAlt, FaUserFriends, FaClipboardCheck, FaHandHoldingHeart 
@@ -6,7 +5,7 @@ import {
 import { RiMentalHealthFill, RiShieldCrossFill } from "react-icons/ri";
 import { GiHealing, GiMedicines } from "react-icons/gi";
 import { BiHealth } from "react-icons/bi";
-import Container from '../Container'; // Using your Container component
+import Container from '../container'; // Using your Container component
 
 // Small reusable sub-component for the service items
 const ServiceCard = ({ icon: Icon, text, colorClass }: { icon: any, text: string, colorClass: string }) => (

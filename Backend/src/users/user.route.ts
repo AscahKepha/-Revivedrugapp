@@ -4,30 +4,38 @@ import {
     getUserByIdController, 
     createUserController, 
     deleteUserController, 
-    updateUserController 
+    updateUserController,
+    handleUserCheckIn
 } from "./user.controller";
-//  Ensure 'supportPartnerRoleAuth' matches the exact export name in bearAuth.ts
+
 import { 
     adminRoleAuth, 
-    patientRoleAuth, 
-    supportPartnerRoleAuth, 
     allRoleAuth 
 } from "../middleware/bearAuth";
 
 export const userRouter = Router();
 
-// Fixed typo from '/uers' to '/users'
-// Only Admins should be able to list all users
+// Retrieve all users - restricted to Admin
 userRouter.get('/users', adminRoleAuth, getUsersController);
 
-// Individuals or Admins can view a profile
+// Get a specific user profile by ID - accessible by the user themselves or Admin
 userRouter.get('/users/:id', allRoleAuth, getUserByIdController);
 
-// Usually, creating a user is via /register, but if this is an admin tool:
+// Create a new user - restricted to Admin (standard registration usually goes through auth routes)
 userRouter.post('/users', adminRoleAuth, createUserController);
 
-// Users can update their own info or Admins can assist
+// Update user details - accessible by the user or Admin
 userRouter.put('/users/:id', allRoleAuth, updateUserController);
 
-// Only Admins should be allowed to delete accounts
+// Delete a user - restricted to Admin
 userRouter.delete('/users/:id', adminRoleAuth, deleteUserController);
+
+/**
+ * Custom Actions
+ */
+
+// Increment streak when a user completes a daily check-in
+// Usually accessible by patients or all authenticated roles
+userRouter.patch('/users/:id/checkin', allRoleAuth, handleUserCheckIn);
+
+export default userRouter;

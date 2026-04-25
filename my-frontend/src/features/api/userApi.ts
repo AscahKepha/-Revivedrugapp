@@ -1,7 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import type { UserProfile } from '../../features/auth/authSlice';
-import type { BackendLoginResponse } from '../../types/auth';
+import type { BackendLoginResponse, UserProfile } from '../../types/auth';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -19,6 +18,7 @@ export const userApi = createApi({
   }),
   tagTypes: ['User'],
   endpoints: (builder) => ({
+    // Auth Endpoints
     loginUser: builder.mutation<BackendLoginResponse, { email: string; password: string }>({
       query: (credentials) => ({
         url: 'auth/login',
@@ -33,6 +33,19 @@ export const userApi = createApi({
         method: 'POST',
         body: userData,
       }),
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+    }),
+
+    // User Management Endpoints
+    getAllUsersProfiles: builder.query<UserProfile[], void>({
+      query: () => 'users',
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ userId }) => ({ type: 'User' as const, id: userId })),
+              { type: 'User', id: 'LIST' },
+            ]
+          : [{ type: 'User', id: 'LIST' }],
     }),
 
     getUserById: builder.query<UserProfile, number>({
@@ -40,7 +53,6 @@ export const userApi = createApi({
       providesTags: (_result, _error, id) => [{ type: 'User', id }],
     }),
 
-    // ✅ MODIFIED: Generic update mutation used by both EditModal and Profile Image upload
     updateUser: builder.mutation<
       { message: string; user: UserProfile },
       Partial<UserProfile> & { userId: number }
@@ -50,9 +62,21 @@ export const userApi = createApi({
         method: 'PUT',
         body: patch,
       }),
-      invalidatesTags: (_result, _error, { userId }) => [{ type: 'User', id: userId }],
+      invalidatesTags: (_result, _error, { userId }) => [
+        { type: 'User', id: userId },
+        { type: 'User', id: 'LIST' }
+      ],
     }),
 
+    deleteUser: builder.mutation<{ message: string }, number>({
+      query: (userId) => ({
+        url: `users/${userId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+    }),
+
+    // Specialized Actions
     changePassword: builder.mutation<
       { message: string },
       { userId: number; currentPassword: string; newPassword: string }
@@ -65,15 +89,16 @@ export const userApi = createApi({
       invalidatesTags: (_result, _error, { userId }) => [{ type: 'User', id: userId }],
     }),
 
-    getAllUsersProfiles: builder.query<UserProfile[], void>({
-      query: () => 'users',
-      providesTags: (result) =>
-        result
-          ? [
-            ...result.map(({ userId }) => ({ type: 'User' as const, id: userId })),
-            { type: 'User', id: 'LIST' },
-          ]
-          : [{ type: 'User', id: 'LIST' }],
+    // Added: Daily Check-in (Streak Increment)
+    performCheckIn: builder.mutation<{ message: string; currentStreak: number }, number>({
+      query: (userId) => ({
+        url: `users/${userId}/checkin`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, userId) => [
+        { type: 'User', id: userId },
+        { type: 'User', id: 'LIST' }
+      ],
     }),
   }),
 });
@@ -81,8 +106,10 @@ export const userApi = createApi({
 export const {
   useLoginUserMutation,
   useRegisterUserMutation,
-  useGetUserByIdQuery,
-  useUpdateUserMutation, // Export the renamed mutation
-  useChangePasswordMutation,
   useGetAllUsersProfilesQuery,
+  useGetUserByIdQuery,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+  useChangePasswordMutation,
+  usePerformCheckInMutation, // Hook for the streak increment
 } = userApi;

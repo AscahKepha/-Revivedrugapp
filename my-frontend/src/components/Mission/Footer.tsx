@@ -1,6 +1,6 @@
 import React from "react";
 import { FaFacebook, FaYoutube, FaTwitter, FaInstagram, FaLinkedin, FaHeart } from "react-icons/fa";
-import Container from "../Container"; // Using the container component you shared!
+import Container from "../container"; // Using the container component you shared!
 
 export const FooterS: React.FC = () => {
     const currentYear = new Date().getFullYear();

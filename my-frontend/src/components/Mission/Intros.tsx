@@ -1,5 +1,5 @@
 import React from 'react';
-import Container from '../Container'; // Keeping everything aligned
+import Container from '../container'; // Keeping everything aligned
 
 export const IntroS: React.FC = () => {
     return (
