@@ -1,120 +1,117 @@
-import { Request, Response } from "express";
-import { createRiskScoreService, updateRiskScoreServices, getRiskScoreByIdService, getRiskScoreServices, deleteRiskScoreServices, getRiskScoresByUserService } from "./score.service";
-import { riskScoreTable } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
-import db from "../drizzle/db";
+import { Request, Response, NextFunction } from "express";
+import { 
+    createRiskScoreService, 
+    updateRiskScoreServices, 
+    getRiskScoreByIdService, 
+    getRiskScoreServices, 
+    deleteRiskScoreServices, 
+    getRiskScoresByUserService 
+} from "./score.service";
 
-
-export const getRiskScoreController = async (req: Request, res: Response) => {
+/**
+ * GET /risk-scores
+ * Fetch all risk scores (Admin utility)
+ */
+export const getRiskScoreController = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const allRiskScore = await getRiskScoreServices();
-        if (allRiskScore == null || allRiskScore.length == 0) {
-            res.status(404).json({messages: "No Risk Scores found"});
-        } else {
-            res.status(200).json(allRiskScore);
+        if (!allRiskScore || allRiskScore.length === 0) {
+            return res.status(404).json({ message: "No Risk Scores found" });
         }
-    } catch (error:any) {
-        res.status(500).json({message: error.message || "error fetching Risk Scores"});
-    }
-}
-
-
-export const getRiskScoreByIdController = async (req:Request, res:Response) => {
-    const RiskScoreId = parseInt(req.params.id as string);
-    if (isNaN(RiskScoreId)) {
-        res.status(400).json({message: "Invalid Risk Score Id"});
-        return;
-    }
-    try {
-        const RiskScore = await getRiskScoreByIdService(RiskScoreId)
-        if (RiskScore == undefined ) {
-            res.status(404).json({message: "RiskScore not found" });
-        }else {
-            res.status(200).json(RiskScore);
-        }
-    }catch (error: any){
-        res.status(500).json({error: error.message || "error fetching RiskScore"});
-    }
-}
-
-export const getRiskScoreByUserId = async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId as string);
-    try {
-        const scores = await getRiskScoresByUserService(userId); // You'll need this service
-        res.status(200).json(scores);
+        return res.status(200).json(allRiskScore);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        next(error);
+    }
+}
+
+/**
+ * GET /risk-scores/:id
+ */
+export const getRiskScoreByIdController = async (req: Request, res: Response, next: NextFunction) => {
+    const riskScoreId = parseInt(req.params.id as string);
+    if (isNaN(riskScoreId)) {
+        return res.status(400).json({ message: "Invalid Risk Score Id" });
+    }
+    try {
+        const riskScore = await getRiskScoreByIdService(riskScoreId);
+        if (!riskScore) {
+            return res.status(404).json({ message: "Risk Score not found" });
+        }
+        return res.status(200).json(riskScore);
+    } catch (error: any) {
+        next(error);
+    }
+}
+
+/**
+ * GET /risk-scores/user/:userId
+ * Fetch scores specifically for one user's history
+ */
+export const getRiskScoreByUserId = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = parseInt(req.params.userId as string);
+    if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid User Id" });
+    }
+    try {
+        const scores = await getRiskScoresByUserService(userId);
+        if (!scores || scores.length === 0) {
+            return res.status(404).json({ message: "No scores found for this user" });
+        }
+        return res.status(200).json(scores);
+    } catch (error: any) {
+        next(error);
     }
 };
 
-// export const createRiskScoreController = async(req: Request, res:Response) => {
-//     const { userId, score, riskLevel} = req.body;
-//     if(!userId || score === undefined || riskLevel === undefined ) {
-//         res.status(400).json({error: "All fields are required"});
-//         return;
-//     }
-//     try{
-//         const newRiskScore = await createRiskScoreService ({
-//              userId, score, riskLevel
-//         });
-
-//         if (!newRiskScore) {
-//             res.status(500).json({message:"Failed to create RiskScore"});
-//         } else {
-//             res.status(201).json(newRiskScore);
-//         }
-//     } catch (error:any){  
-//        res.status(500).json ({ error: error.message || "Failed to create RiskScore" });
-//     }
-// };
-
-export const updateRiskScoreController = async(req:Request, res:Response) => {
+/**
+ * PUT /risk-scores/:id
+ */
+export const updateRiskScoreController = async (req: Request, res: Response, next: NextFunction) => {
     const riskScoreId = parseInt(req.params.id as string);
     if (isNaN(riskScoreId)) {
-        res.status(400).json({error: "Invalid RiskScore Id"});
-        return;
+        return res.status(400).json({ error: "Invalid RiskScore Id" });
     }
-    const {userId, score, riskLevel} = req.body;
-    if(!userId || score === undefined || riskLevel === undefined) {
-        res.status(400).json({error: "all fields is required"});
-        return;
+
+    const { userId, score, riskLevel } = req.body;
+    if (!userId || score === undefined || riskLevel === undefined) {
+        return res.status(400).json({ error: "All fields are required" });
     }
 
     try {
         const existingRiskScore = await getRiskScoreByIdService(riskScoreId);
         if (!existingRiskScore) {
-            res.status(404).json({message: "RiskScore not found"});
-            return;
+            return res.status(404).json({ message: "RiskScore not found" });
         }
+
         const updatedRiskScore = await updateRiskScoreServices(riskScoreId, {
             userId, score, riskLevel
         });
-        if (updatedRiskScore == null) {
-            res.status(404).json({message: "RiskScore not found or failed to update"});
-        }else{
-            res.status(200).json({message:updatedRiskScore});
+
+        if (!updatedRiskScore) {
+            return res.status(404).json({ message: "RiskScore not found or failed to update" });
         }
-    }catch (error:any){
-        res.status(500).json({error:error.message || "Failed to update RiskScore "})
+        return res.status(200).json({ message: "Risk Score updated successfully", data: updatedRiskScore });
+    } catch (error: any) {
+        next(error);
     }
 }
 
-
-export const deleteRiskScoreController = async(req:Request, res:Response) => {
-    const RiskScoreId = parseInt(req.params.id as string);
-    if (isNaN(RiskScoreId)){ 
-        res.status(400).json({message: "Invalid RiskScore Id"});
-        return;
+/**
+ * DELETE /risk-scores/:id
+ */
+export const deleteRiskScoreController = async (req: Request, res: Response, next: NextFunction) => {
+    const riskScoreId = parseInt(req.params.id as string);
+    if (isNaN(riskScoreId)) {
+        return res.status(400).json({ message: "Invalid RiskScore Id" });
     }
-    try{
-        const deletedRiskScore = await deleteRiskScoreServices(RiskScoreId);
+    try {
+        const deletedRiskScore = await deleteRiskScoreServices(riskScoreId);
         if (deletedRiskScore) {
-            res.status(200).json({message: "RiskScore deleted "});
-
-        }else {
-            res.status(404).json({message: "RiskScore not found"});
+            return res.status(200).json({ message: "RiskScore deleted successfully" });
+        } else {
+            return res.status(404).json({ message: "RiskScore not found" });
         }
-    }catch  (error:any){
-        res.status(500).json({error:error.message || "failed to delete RiskScore"});
+    } catch (error: any) {
+        next(error);
     }
 }

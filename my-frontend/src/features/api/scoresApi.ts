@@ -1,11 +1,24 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import { type SupportAction, type CreateActionRequest } from '../../types/index';
+
+// Define the interface based on your riskScoreTable schema
+export interface RiskScore {
+  scoreId: number;
+  userId: number;
+  score: number;
+  riskLevel: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-export const supportActionsApi = createApi({
-  reducerPath: 'supportActionsApi',
+/**
+ * riskScoreApi: Manages behavioral health risk assessments.
+ * Access is controlled by adminRoleAuth and allRoleAuth.
+ */
+export const riskScoreApi = createApi({
+  reducerPath: 'riskScoreApi',
   baseQuery: fetchBaseQuery({
     baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
@@ -16,55 +29,71 @@ export const supportActionsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['SupportAction'],
+  tagTypes: ['RiskScore'],
   endpoints: (builder) => ({
-    // Fetch all logs of actions taken
-    getActions: builder.query<SupportAction[], void>({
-      query: () => 'actions',
-      providesTags: ['SupportAction'],
+    
+    // GET /riskscore - Restricted to Admin (System-wide monitoring)
+    getAllRiskScores: builder.query<RiskScore[], void>({
+      query: () => 'riskscore',
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ scoreId }) => ({ type: 'RiskScore' as const, id: scoreId })),
+              { type: 'RiskScore', id: 'LIST' },
+            ]
+          : [{ type: 'RiskScore', id: 'LIST' }],
     }),
 
-    // Get a specific action log by ID
-    getActionById: builder.query<SupportAction, number>({
-      query: (id) => `actions/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'SupportAction', id }],
+    // GET /riskscore/:id - Accessible via allRoleAuth
+    getRiskScoreById: builder.query<RiskScore, number>({
+      query: (id) => `riskscore/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'RiskScore', id }],
     }),
 
-    // Log a new action (e.g., "Called user during high-risk event")
-    createAction: builder.mutation<SupportAction, CreateActionRequest>({
-      query: (newAction) => ({
-        url: 'actions',
-        method: 'POST',
-        body: newAction,
-      }),
-      invalidatesTags: ['SupportAction'],
+    /**
+     * GET /riskscore/user/:userId
+     * Maps to getRiskScoreByUserId controller.
+     * Useful for showing a specific user's score history.
+     */
+    getRiskScoresByUserId: builder.query<RiskScore[], number>({
+      query: (userId) => `riskscore/user/${userId}`,
+      providesTags: (result) => 
+        result 
+          ? [{ type: 'RiskScore', id: 'LIST' }] 
+          : [],
     }),
 
-    // Update an existing action log
-    updateAction: builder.mutation<SupportAction, { id: number; data: Partial<CreateActionRequest> }>({
-      query: ({ id, data }) => ({
-        url: `actions/${id}`,
+    // PUT /riskscore/:id - Restricted to Admin
+    updateRiskScore: builder.mutation<
+      { message: string }, 
+      Partial<RiskScore> & { scoreId: number }
+    >({
+      query: ({ scoreId, ...patch }) => ({
+        url: `riskscore/${scoreId}`,
         method: 'PUT',
-        body: data,
+        body: patch,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'SupportAction', id }],
+      invalidatesTags: (_result, _error, { scoreId }) => [
+        { type: 'RiskScore', id: scoreId },
+        { type: 'RiskScore', id: 'LIST' }
+      ],
     }),
 
-    // Delete an action log
-    deleteAction: builder.mutation<{ message: string }, number>({
+    // DELETE /riskscore/:id - Restricted to Admin
+    deleteRiskScore: builder.mutation<{ message: string }, number>({
       query: (id) => ({
-        url: `actions/${id}`,
+        url: `riskscore/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['SupportAction'],
+      invalidatesTags: [{ type: 'RiskScore', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
-  useGetActionsQuery,
-  useGetActionByIdQuery,
-  useCreateActionMutation,
-  useUpdateActionMutation,
-  useDeleteActionMutation,
-} = supportActionsApi;
+  useGetAllRiskScoresQuery,
+  useGetRiskScoreByIdQuery,
+  useGetRiskScoresByUserIdQuery,
+  useUpdateRiskScoreMutation,
+  useDeleteRiskScoreMutation,
+} = riskScoreApi;

@@ -1,14 +1,19 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import type { BackendLoginResponse, UserProfile } from '../../types/auth';
+import type { UserProfile } from '../../types/auth';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+/**
+ * userApi: Dedicated to User Management & Profile Actions
+ * (Auth logic like Login/Register is handled in authApi)
+ */
 export const userApi = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
     baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
+      // Pull token from the auth state to satisfy the backend's bearAuth middleware
       const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
@@ -18,25 +23,8 @@ export const userApi = createApi({
   }),
   tagTypes: ['User'],
   endpoints: (builder) => ({
-    // Auth Endpoints
-    loginUser: builder.mutation<BackendLoginResponse, { email: string; password: string }>({
-      query: (credentials) => ({
-        url: 'auth/login',
-        method: 'POST',
-        body: credentials,
-      }),
-    }),
-
-    registerUser: builder.mutation<any, any>({
-      query: (userData) => ({
-        url: 'auth/register',
-        method: 'POST',
-        body: userData,
-      }),
-      invalidatesTags: [{ type: 'User', id: 'LIST' }],
-    }),
-
-    // User Management Endpoints
+    
+    // GET /users - Restricted to Admin (adminRoleAuth)
     getAllUsersProfiles: builder.query<UserProfile[], void>({
       query: () => 'users',
       providesTags: (result) =>
@@ -48,13 +36,25 @@ export const userApi = createApi({
           : [{ type: 'User', id: 'LIST' }],
     }),
 
+    // GET /users/:id - Accessible by User or Admin (allRoleAuth)
     getUserById: builder.query<UserProfile, number>({
       query: (userId) => `users/${userId}`,
       providesTags: (_result, _error, id) => [{ type: 'User', id }],
     }),
 
+    // POST /users - Create User via Admin dashboard (adminRoleAuth)
+    createNewUserByAdmin: builder.mutation<{ message: string }, Partial<UserProfile>>({
+      query: (userData) => ({
+        url: 'users', 
+        method: 'POST',
+        body: userData,
+      }),
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+    }),
+
+    // PUT /users/:id - Update profile (allRoleAuth)
     updateUser: builder.mutation<
-      { message: string; user: UserProfile },
+      { message: string }, 
       Partial<UserProfile> & { userId: number }
     >({
       query: ({ userId, ...patch }) => ({
@@ -68,6 +68,7 @@ export const userApi = createApi({
       ],
     }),
 
+    // DELETE /users/:id - Restricted to Admin (adminRoleAuth)
     deleteUser: builder.mutation<{ message: string }, number>({
       query: (userId) => ({
         url: `users/${userId}`,
@@ -76,20 +77,7 @@ export const userApi = createApi({
       invalidatesTags: [{ type: 'User', id: 'LIST' }],
     }),
 
-    // Specialized Actions
-    changePassword: builder.mutation<
-      { message: string },
-      { userId: number; currentPassword: string; newPassword: string }
-    >({
-      query: ({ userId, currentPassword, newPassword }) => ({
-        url: `users/${userId}/change-password`,
-        method: 'PUT',
-        body: { currentPassword, newPassword },
-      }),
-      invalidatesTags: (_result, _error, { userId }) => [{ type: 'User', id: userId }],
-    }),
-
-    // Added: Daily Check-in (Streak Increment)
+    // PATCH /users/:id/checkin - Streak Increment (allRoleAuth)
     performCheckIn: builder.mutation<{ message: string; currentStreak: number }, number>({
       query: (userId) => ({
         url: `users/${userId}/checkin`,
@@ -104,12 +92,10 @@ export const userApi = createApi({
 });
 
 export const {
-  useLoginUserMutation,
-  useRegisterUserMutation,
   useGetAllUsersProfilesQuery,
   useGetUserByIdQuery,
+  useCreateNewUserByAdminMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
-  useChangePasswordMutation,
-  usePerformCheckInMutation, // Hook for the streak increment
+  usePerformCheckInMutation, 
 } = userApi;

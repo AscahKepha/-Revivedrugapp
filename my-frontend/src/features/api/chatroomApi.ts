@@ -1,11 +1,23 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import { type ChatRoom, type CreateChatRoomRequest } from '../../types/index';
+
+// Interface based on your controller logic
+export interface ChatRoom {
+  roomId: number;
+  isPersistent: boolean;
+  description: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-export const chatRoomsApi = createApi({
-  reducerPath: 'chatRoomsApi',
+/**
+ * chatRoomApi: Manages recovery chat room metadata.
+ * Access is primarily Admin-driven, with read access for Patients/Partners.
+ */
+export const chatRoomApi = createApi({
+  reducerPath: 'chatRoomApi',
   baseQuery: fetchBaseQuery({
     baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
@@ -18,53 +30,66 @@ export const chatRoomsApi = createApi({
   }),
   tagTypes: ['ChatRoom'],
   endpoints: (builder) => ({
-    // Fetch all available chat rooms
-    getChatRooms: builder.query<ChatRoom[], void>({
-      query: () => 'chatrooms',
-      providesTags: ['ChatRoom'],
+    
+    // GET /chatroom - Restricted to Admin
+    getAllChatRooms: builder.query<ChatRoom[], void>({
+      query: () => 'chatroom',
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ roomId }) => ({ type: 'ChatRoom' as const, id: roomId })),
+              { type: 'ChatRoom', id: 'LIST' },
+            ]
+          : [{ type: 'ChatRoom', id: 'LIST' }],
     }),
 
-    // Get details for a specific room
+    // GET /chatroom/:id - Accessible via allRoleAuth
     getChatRoomById: builder.query<ChatRoom, number>({
-      query: (id) => `chatrooms/${id}`,
+      query: (id) => `chatroom/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'ChatRoom', id }],
     }),
 
-    // Create a new chat room (e.g., for a specific support group)
-    createChatRoom: builder.mutation<ChatRoom, CreateChatRoomRequest>({
+    // POST /chatroom - Restricted to Admin
+    createChatRoom: builder.mutation<ChatRoom, Omit<ChatRoom, 'roomId'>>({
       query: (newRoom) => ({
-        url: 'chatrooms',
+        url: 'chatroom',
         method: 'POST',
         body: newRoom,
       }),
-      invalidatesTags: ['ChatRoom'],
+      invalidatesTags: [{ type: 'ChatRoom', id: 'LIST' }],
     }),
 
-    // Update room settings or description
-    updateChatRoom: builder.mutation<ChatRoom, { id: number; data: Partial<CreateChatRoomRequest> }>({
-      query: ({ id, data }) => ({
-        url: `chatrooms/${id}`,
+    // PUT /chatroom/:id - Restricted to Admin
+    updateChatRoom: builder.mutation<
+      { message: string; data: ChatRoom }, 
+      Partial<ChatRoom> & { roomId: number }
+    >({
+      query: ({ roomId, ...patch }) => ({
+        url: `chatroom/${roomId}`,
         method: 'PUT',
-        body: data,
+        body: patch,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'ChatRoom', id }],
+      invalidatesTags: (_result, _error, { roomId }) => [
+        { type: 'ChatRoom', id: roomId },
+        { type: 'ChatRoom', id: 'LIST' }
+      ],
     }),
 
-    // Delete a chat room
+    // DELETE /chatroom/:id - Restricted to Admin
     deleteChatRoom: builder.mutation<{ message: string }, number>({
       query: (id) => ({
-        url: `chatrooms/${id}`,
+        url: `chatroom/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['ChatRoom'],
+      invalidatesTags: [{ type: 'ChatRoom', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
-  useGetChatRoomsQuery,
+  useGetAllChatRoomsQuery,
   useGetChatRoomByIdQuery,
   useCreateChatRoomMutation,
   useUpdateChatRoomMutation,
   useDeleteChatRoomMutation,
-} = chatRoomsApi;
+} = chatRoomApi;

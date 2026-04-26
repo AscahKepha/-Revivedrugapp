@@ -85,7 +85,7 @@ const CheckinHistory: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button
-                    onClick={() => { if(confirm('Delete this record?')) deleteCheckin(checkin.checkinId) }}
+                    onClick={() => { if (confirm('Delete this record?')) deleteCheckin(checkin.checkinId) }}
                     className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -95,7 +95,7 @@ const CheckinHistory: React.FC = () => {
             ))}
           </tbody>
         </table>
-        
+
         {checkins.length === 0 && (
           <div className="p-20 text-center text-gray-400">
             No check-ins have been recorded yet.

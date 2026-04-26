@@ -4,6 +4,10 @@ import { type SupportAction, type CreateActionRequest } from '../../types/index'
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+/**
+ * supportActionsApi: Manages support partner intervention logs.
+ * Restricted by adminRoleAuth, supportPartnerRoleAuth, and allRoleAuth.
+ */
 export const supportActionsApi = createApi({
   reducerPath: 'supportActionsApi',
   baseQuery: fetchBaseQuery({
@@ -18,45 +22,56 @@ export const supportActionsApi = createApi({
   }),
   tagTypes: ['SupportAction'],
   endpoints: (builder) => ({
-    // Fetch all interventions/actions
+    
+    // GET /actions - Restricted to Admin
     getActions: builder.query<SupportAction[], void>({
       query: () => 'actions',
-      providesTags: ['SupportAction'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ actionId }) => ({ type: 'SupportAction' as const, id: actionId })),
+              { type: 'SupportAction', id: 'LIST' },
+            ]
+          : [{ type: 'SupportAction', id: 'LIST' }],
     }),
 
-    // Get a specific action by its ID
+    // GET /actions/:id - Accessible via allRoleAuth
     getActionById: builder.query<SupportAction, number>({
       query: (id) => `actions/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'SupportAction', id }],
     }),
 
-    // Log a new intervention from a support partner
-    createAction: builder.mutation<SupportAction, CreateActionRequest>({
+    // POST /actions - Restricted to Support Partner
+    createAction: builder.mutation<string, CreateActionRequest>({
       query: (newAction) => ({
         url: 'actions',
         method: 'POST',
         body: newAction,
       }),
-      invalidatesTags: ['SupportAction'],
+      // Invalidate the list so the new intervention shows up immediately
+      invalidatesTags: [{ type: 'SupportAction', id: 'LIST' }],
     }),
 
-    // Update an existing action log
-    updateAction: builder.mutation<SupportAction, { id: number; data: Partial<CreateActionRequest> }>({
+    // PUT /actions/:id - Restricted to Support Partner
+    updateAction: builder.mutation<string, { id: number; data: Partial<CreateActionRequest> }>({
       query: ({ id, data }) => ({
         url: `actions/${id}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'SupportAction', id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'SupportAction', id },
+        { type: 'SupportAction', id: 'LIST' }
+      ],
     }),
 
-    // Remove an action log
+    // DELETE /actions/:id - Restricted to Admin
     deleteAction: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `actions/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['SupportAction'],
+      invalidatesTags: [{ type: 'SupportAction', id: 'LIST' }],
     }),
   }),
 });

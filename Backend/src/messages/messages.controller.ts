@@ -1,132 +1,147 @@
-import { Request, Response } from "express";
-import { eq } from "drizzle-orm";
-import { createMessageService, updateMessageServices, getMessageByIdService, getMessageServices, deleteMessageServices } from "./messages.service";
-import { messagesTable } from "../drizzle/schema";
-import db from "../drizzle/db";
+import { Request, Response, NextFunction } from "express";
+import { 
+    createMessageService, 
+    updateMessageServices, 
+    getMessageByIdService, 
+    getMessageServices, 
+    deleteMessageServices 
+} from "./messages.service";
 
-
-export const getMessagesController = async (req: Request, res: Response) => {
+/**
+ * GET /messages
+ */
+export const getMessagesController = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const allMessages = await getMessageServices();
-        if (allMessages == null || allMessages.length == 0) {
-            res.status(404).json({messages: "No messages found"});
-        } else {
-            res.status(200).json(allMessages);
+        if (!allMessages || allMessages.length === 0) {
+            return res.status(404).json({ message: "No messages found" });
         }
-    } catch (error:any) {
-        res.status(500).json({message: error.message || "error fetching messages"});
+        return res.status(200).json(allMessages);
+    } catch (error: any) {
+        next(error);
     }
 }
 
-
-export const getMessagesByIdController = async (req:Request, res:Response) => {
+/**
+ * GET /messages/:id
+ */
+export const getMessagesByIdController = async (req: Request, res: Response, next: NextFunction) => {
     const messageId = parseInt(req.params.id as string);
     if (isNaN(messageId)) {
-        res.status(400).json({message: "Invalid message Id"});
-        return;
+        return res.status(400).json({ message: "Invalid message Id" });
     }
     try {
-        const Messages = await getMessageByIdService(messageId)
-        if (Messages == undefined ) {
-            res.status(404).json({message: "Messages not found" });
-        }else {
-            res.status(200).json(Messages);
+        const message = await getMessageByIdService(messageId);
+        if (!message) {
+            return res.status(404).json({ message: "Message not found" });
         }
-    }catch (error: any){
-        res.status(500).json({error: error.message || "error fetching Messages"});
+        return res.status(200).json(message);
+    } catch (error: any) {
+        next(error);
     }
 }
 
-export const createMessagesController = async (req: Request, res: Response) => {
-    // 1. Extract roomId and message from the body
+/**
+ * POST /messages
+ */
+export const createMessagesController = async (req: Request, res: Response, next: NextFunction) => {
     const { roomId, message } = req.body;
     
-    // 2. Extract identity from the authenticated request (provided by your auth middleware)
+    // Extracted from auth middleware (bearAuth)
     const userId = (req as any).user?.userId; 
     const sender = (req as any).user?.role;
 
-    // Validation: We check the body fields AND the authenticated fields
     if (!roomId || !message || !userId || !sender) {
-        res.status(400).json({ error: "Room ID and message text are required" });
-        return;
+        return res.status(400).json({ error: "Room ID and message text are required" });
     }
 
     try {
-        const newMessages = await createMessageService({
+        const newMessage = await createMessageService({
             roomId,
             userId,
             message,
             sender
         });
 
-        if (!newMessages) {
-            res.status(500).json({ message: "Failed to create Messages" });
-        } else {
-            res.status(201).json(newMessages);
+        if (!newMessage) {
+            return res.status(500).json({ message: "Failed to create message" });
         }
-    } catch (error: any) {  
-       res.status(500).json({ error: error.message || "Failed to create Messages" });
+        return res.status(201).json(newMessage);
+    } catch (error: any) {
+        next(error);
     }
 };
 
-export const updateMessagesController = async(req:Request, res:Response) => {
-    const messagesId = parseInt(req.params.id as string);
-    if (isNaN(messagesId)) {
-    res.status(400).json({ error: "Invalid message Id" });
-    return;
+/**
+ * PUT /messages/:id
+ */
+export const updateMessagesController = async (req: Request, res: Response, next: NextFunction) => {
+    const messageId = parseInt(req.params.id as string);
+    if (isNaN(messageId)) {
+        return res.status(400).json({ error: "Invalid message Id" });
+    }
+
+    const authUserId = (req as any).user?.userId; 
+    const authRole = (req as any).user?.role;
+    const { message } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: "Message content is required for update" });
+    }
+
+    try {
+        const existingMessage = await getMessageByIdService(messageId);
+        
+        if (!existingMessage) {
+            return res.status(404).json({ message: "Message not found" });
+        }
+
+        // Security: Only the creator or an Admin can edit
+        if (existingMessage.userId !== authUserId && authRole !== 'admin') {
+            return res.status(403).json({ error: "You are not authorized to edit this message" });
+        }
+
+        const updatedMessage = await updateMessageServices(messageId, { message });
+        
+        if (!updatedMessage) {
+            return res.status(404).json({ message: "Failed to update message" });
+        }
+        return res.status(200).json({ message: updatedMessage });
+    } catch (error: any) {
+        next(error);
+    }
 }
 
-const authUserId = (req as any).user?.userId; 
+/**
+ * DELETE /messages/:id
+ */
+export const deleteMessagesController = async (req: Request, res: Response, next: NextFunction) => {
+    const messageId = parseInt(req.params.id as string);
+    if (isNaN(messageId)) {
+        return res.status(400).json({ message: "Invalid Message Id" });
+    }
+
+    const authUserId = (req as any).user?.userId; 
     const authRole = (req as any).user?.role;
 
-const { message } = req.body; // Usually, you only allow updating the text
-if (!message) {
-    res.status(400).json({ error: "Message content is required for update" });
-    return;
-}
-
-try {
-    const existingMessage = await getMessageByIdService(messagesId);
-    
-    if (!existingMessage) {
-        res.status(404).json({ message: "Message not found" });
-        return;
-    }
-
-    // SECURITY CHECK: Is this the owner of the message OR an admin?
-    if (existingMessage.userId !== authUserId && authRole !== 'admin') {
-        res.status(403).json({ error: "You are not authorized to edit this message" });
-        return;
-    }
-
-    const updatedMessage = await updateMessageServices(messagesId, { message });
-    
-    if (!updatedMessage) {
-        res.status(404).json({ message: "Message not found or failed to update" });
-    } else {
-        res.status(200).json({ message: updatedMessage });
-    }
-} catch (error: any) {
-    res.status(500).json({ error: error.message || "Failed to update Message" });
-}
-}
-
-
-export const deleteMessagesController = async(req:Request, res:Response) => {
-    const messagesId = parseInt(req.params.id as string);
-    if (isNaN(messagesId)){ 
-        res.status(400).json({message: "Invalid Message Id"});
-        return;
-    }
-    try{
-        const deletedMessages = await deleteMessageServices(messagesId);
-        if (deletedMessages) {
-            res.status(200).json({message: "Message deleted "});
-
-        }else {
-            res.status(404).json({message: "Message not found"});
+    try {
+        const existingMessage = await getMessageByIdService(messageId);
+        if (!existingMessage) {
+            return res.status(404).json({ message: "Message not found" });
         }
-    }catch  (error:any){
-        res.status(500).json({error:error.message || "failed to delete Message"});
+
+        // Security: Only the creator or an Admin can delete
+        if (existingMessage.userId !== authUserId && authRole !== 'admin') {
+            return res.status(403).json({ error: "You are not authorized to delete this message" });
+        }
+
+        const deletedMessage = await deleteMessageServices(messageId);
+        if (deletedMessage) {
+            return res.status(200).json({ message: "Message deleted successfully" });
+        } else {
+            return res.status(404).json({ message: "Message not found" });
+        }
+    } catch (error: any) {
+        next(error);
     }
 }

@@ -1,9 +1,29 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import { type Message, type CreateMessageRequest } from '../../types/index';
+
+// Interface based on messagesTable and controller logic
+export interface Message {
+  messageId: number;
+  roomId: number;
+  userId: number;
+  message: string;
+  sender: 'admin' | 'patient' | 'support_partner'; // Based on your auth role logic
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Interface for creating a new message
+export interface CreateMessageRequest {
+  roomId: number;
+  message: string;
+}
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+/**
+ * messagesApi: Manages chat messages within recovery rooms.
+ * Aligns with MessagesRouter and bearAuth logic.
+ */
 export const messagesApi = createApi({
   reducerPath: 'messagesApi',
   baseQuery: fetchBaseQuery({
@@ -18,56 +38,66 @@ export const messagesApi = createApi({
   }),
   tagTypes: ['Message'],
   endpoints: (builder) => ({
-    // Get all messages (General use or admin logs)
-    getMessages: builder.query<Message[], void>({
+    
+    // GET /messages - Restricted to Admin
+    getAllMessages: builder.query<Message[], void>({
       query: () => 'messages',
-      providesTags: ['Message'],
-    }),
-
-    // Fetch messages for a specific room
-    // Assuming your backend has a route like GET /messages/room/:roomId
-    getMessagesByRoom: builder.query<Message[], number>({
-      query: (roomId) => `messages/room/${roomId}`,
       providesTags: (result) =>
         result
-          ? [...result.map(({ messagesId }) => ({ type: 'Message' as const, id: messagesId })), 'Message']
-          : ['Message'],
+          ? [
+              ...result.map(({ messageId }) => ({ type: 'Message' as const, id: messageId })),
+              { type: 'Message', id: 'LIST' },
+            ]
+          : [{ type: 'Message', id: 'LIST' }],
     }),
 
-    // Send a new message
+    // GET /messages/:id - Accessible via allRoleAuth
+    getMessageById: builder.query<Message, number>({
+      query: (id) => `messages/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'Message', id }],
+    }),
+
+    /**
+     * POST /messages - Send a message (allRoleAuth)
+     * Backend automatically extracts userId and sender role from the token.
+     */
     createMessage: builder.mutation<Message, CreateMessageRequest>({
       query: (newMessage) => ({
         url: 'messages',
         method: 'POST',
         body: newMessage,
       }),
-      invalidatesTags: ['Message'],
+      // Invalidate the LIST so any active chat windows refresh to show the new message
+      invalidatesTags: [{ type: 'Message', id: 'LIST' }],
     }),
 
-    // Update an existing message (Owner or Admin only)
-    updateMessage: builder.mutation<Message, { id: number; message: string }>({
-      query: ({ id, message }) => ({
-        url: `messages/${id}`,
+    // PUT /messages/:id - Edit a message (allRoleAuth - owner/admin only check in backend)
+    updateMessage: builder.mutation<{ message: Message }, { messageId: number; message: string }>({
+      query: ({ messageId, message }) => ({
+        url: `messages/${messageId}`,
         method: 'PUT',
         body: { message },
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Message', id }],
+      invalidatesTags: (_result, _error, { messageId }) => [
+        { type: 'Message', id: messageId },
+        { type: 'Message', id: 'LIST' }
+      ],
     }),
 
-    // Delete a message
+    // DELETE /messages/:id - Restricted to Admin
     deleteMessage: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `messages/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Message'],
+      invalidatesTags: [{ type: 'Message', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
-  useGetMessagesQuery,
-  useGetMessagesByRoomQuery,
+  useGetAllMessagesQuery,
+  useGetMessageByIdQuery,
   useCreateMessageMutation,
   useUpdateMessageMutation,
   useDeleteMessageMutation,

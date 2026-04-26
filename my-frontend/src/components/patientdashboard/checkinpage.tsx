@@ -3,13 +3,13 @@ import { useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';
 import { useCreateCheckinMutation } from '../../features/api/checkinsApi';
 import { type RootState } from '../../app/types';
-import { 
-  Brain, 
-  ShieldCheck, 
-  Flame, 
-  MessageSquare, 
-  HeartPulse, 
-  History, 
+import {
+  Brain,
+  ShieldCheck,
+  Flame,
+  MessageSquare,
+  HeartPulse,
+  History,
   TrendingUp,
   Clock,
   CheckCircle2
@@ -42,13 +42,13 @@ const CheckinPage = () => {
   });
 
   const watchedValues = watch();
-  
+
   // Risk calculation for live UI feedback
   const calculateLiveRisk = () => {
-    const score = Number(watchedValues.cravings) + 
-                  (10 - Number(watchedValues.control)) + 
-                  (10 - Number(watchedValues.selfEfficacy)) + 
-                  (watchedValues.consequences ? 5 : 0);
+    const score = Number(watchedValues.cravings) +
+      (10 - Number(watchedValues.control)) +
+      (10 - Number(watchedValues.selfEfficacy)) +
+      (watchedValues.consequences ? 5 : 0);
     if (score >= 18) return { label: "High Risk", color: "text-red-600 bg-red-50", border: "border-red-100" };
     if (score >= 10) return { label: "Medium Risk", color: "text-amber-600 bg-amber-50", border: "border-amber-100" };
     return { label: "Stable", color: "text-emerald-600 bg-emerald-50", border: "border-emerald-100" };
@@ -88,30 +88,30 @@ const CheckinPage = () => {
 
       {/* 2. Recovery Pulse (Visual Overview) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <OverviewCard 
-          icon={<Flame className="text-orange-500" />} 
-          label="Sober Streak" 
-          value="24 Days" 
-          subtext="+2 from last week" 
+        <OverviewCard
+          icon={<Flame className="text-orange-500" />}
+          label="Sober Streak"
+          value="24 Days"
+          subtext="+2 from last week"
         />
-        <OverviewCard 
-          icon={<TrendingUp className="text-blue-500" />} 
-          label="Self-Efficacy" 
-          value={`${watchedValues.selfEfficacy * 10}%`} 
-          subtext="Confidence level" 
+        <OverviewCard
+          icon={<TrendingUp className="text-blue-500" />}
+          label="Self-Efficacy"
+          value={`${watchedValues.selfEfficacy * 10}%`}
+          subtext="Confidence level"
         />
-        <OverviewCard 
-          icon={<History className="text-emerald-500" />} 
-          label="Check-ins" 
-          value="128" 
-          subtext="Total lifetime logs" 
+        <OverviewCard
+          icon={<History className="text-emerald-500" />}
+          label="Check-ins"
+          value="128"
+          subtext="Total lifetime logs"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
         {/* 3. The Check-in Form (Takes 3 columns) */}
         <form onSubmit={handleSubmit(onSubmit)} className="lg:col-span-3 space-y-6">
-          
+
           {/* Urge Assessment */}
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-8">
             <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
@@ -126,8 +126,8 @@ const CheckinPage = () => {
                   {watchedValues.cravings}/10
                 </span>
               </div>
-              <input 
-                type="range" min="0" max="10" 
+              <input
+                type="range" min="0" max="10"
                 {...register('cravings')}
                 className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
               />
@@ -139,8 +139,8 @@ const CheckinPage = () => {
                 <label className="text-xs font-black uppercase text-gray-400 tracking-widest">Perceived Control</label>
                 <span className="text-xl font-black text-emerald-600">{watchedValues.control}/10</span>
               </div>
-              <input 
-                type="range" min="0" max="10" 
+              <input
+                type="range" min="0" max="10"
                 {...register('control')}
                 className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
               />
@@ -149,17 +149,17 @@ const CheckinPage = () => {
 
           {/* Behavior Toggles */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ToggleButton 
-              label="Recent Slip-up" 
-              icon={<Flame />} 
-              active={watchedValues.consequences} 
+            <ToggleButton
+              label="Recent Slip-up"
+              icon={<Flame />}
+              active={watchedValues.consequences}
               activeColor="bg-red-500 border-red-100 text-red-600"
               register={register('consequences')}
             />
-            <ToggleButton 
-              label="Coping Skills Used" 
-              icon={<ShieldCheck />} 
-              active={watchedValues.copingUsed} 
+            <ToggleButton
+              label="Coping Skills Used"
+              icon={<ShieldCheck />}
+              active={watchedValues.copingUsed}
               activeColor="bg-emerald-500 border-emerald-100 text-emerald-600"
               register={register('copingUsed')}
             />
@@ -167,19 +167,19 @@ const CheckinPage = () => {
 
           {/* Notes */}
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-4">
-             <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="text-emerald-600" size={20} />
-                <h3 className="text-lg font-black uppercase tracking-tight">Personal Journal</h3>
-             </div>
-             <textarea 
-               {...register('notes')}
-               placeholder="Write about your triggers, victories, or just how you're feeling..."
-               className="w-full h-32 p-6 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-100 focus:ring-4 focus:ring-emerald-50 outline-none transition-all font-medium text-gray-700"
-             />
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare className="text-emerald-600" size={20} />
+              <h3 className="text-lg font-black uppercase tracking-tight">Personal Journal</h3>
+            </div>
+            <textarea
+              {...register('notes')}
+              placeholder="Write about your triggers, victories, or just how you're feeling..."
+              className="w-full h-32 p-6 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-100 focus:ring-4 focus:ring-emerald-50 outline-none transition-all font-medium text-gray-700"
+            />
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
             className="w-full h-16 bg-gray-900 hover:bg-black text-white rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-[0.98] transition-all"
           >
@@ -192,7 +192,7 @@ const CheckinPage = () => {
           <div className="bg-emerald-600 rounded-[2.5rem] p-8 text-white shadow-xl shadow-emerald-100">
             <h3 className="text-xl font-black uppercase tracking-tight mb-4">Why we check-in?</h3>
             <p className="text-emerald-50 text-sm leading-relaxed mb-6">
-              Daily check-ins help identify patterns in your cravings before they lead to a slip. 
+              Daily check-ins help identify patterns in your cravings before they lead to a slip.
               By logging your mood, you're building a "check-up" habit that saves lives.
             </p>
             <div className="bg-white/10 rounded-2xl p-4 border border-white/10">
@@ -227,7 +227,7 @@ const OverviewCard = ({ icon, label, value, subtext }: any) => (
       </div>
     </div>
     <p className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1 italic">
-       {subtext}
+      {subtext}
     </p>
   </div>
 );

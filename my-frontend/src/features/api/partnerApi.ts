@@ -1,11 +1,25 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import { type SupportPartner, type CreatePartnerRequest } from '../../types/index';
+
+// Interface matching your supportpartnersTable and controller logic
+export interface SupportPartner {
+  partnerId: number;
+  userId: number;
+  partnerName: string;
+  contactInfo: string;
+  relationship: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-export const partnerApi = createApi({
-  reducerPath: 'partnerApi',
+/**
+ * supportPartnerApi: Manages the Support Partners assigned to patients.
+ * Aligns with SupportPartnerRouter and SupportPartnerController.
+ */
+export const supportPartnerApi = createApi({
+  reducerPath: 'supportPartnerApi',
   baseQuery: fetchBaseQuery({
     baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
@@ -16,59 +30,68 @@ export const partnerApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Partner'],
+  tagTypes: ['SupportPartner'],
   endpoints: (builder) => ({
-    // Fetch all support partners (Admin view)
+    
+    // GET /supportpartner - Restricted to Admin
     getSupportPartners: builder.query<SupportPartner[], void>({
-      query: () => 'partners',
-      providesTags: ['Partner'],
-    }),
-
-    // Get partners for a specific user
-    // Assumes your backend has a route like GET /partners/user/:userId
-    getPartnersByUserId: builder.query<SupportPartner[], number>({
-      query: (userId) => `partners/user/${userId}`,
+      query: () => 'supportpartner',
       providesTags: (result) =>
         result
-          ? [...result.map(({ partnerId }) => ({ type: 'Partner' as const, id: partnerId })), 'Partner']
-          : ['Partner'],
+          ? [
+              ...result.map(({ partnerId }) => ({ type: 'SupportPartner' as const, id: partnerId })),
+              { type: 'SupportPartner', id: 'LIST' },
+            ]
+          : [{ type: 'SupportPartner', id: 'LIST' }],
     }),
 
-    // Add a new support partner
-    createSupportPartner: builder.mutation<SupportPartner, CreatePartnerRequest>({
+    // GET /supportpartner/:id - Accessible via allRoleAuth
+    getSupportPartnerById: builder.query<SupportPartner, number>({
+      query: (id) => `supportpartner/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'SupportPartner', id }],
+    }),
+
+    // POST /supportpartner - Restricted to Patient (patientRoleAuth)
+    createSupportPartner: builder.mutation<{ message: string }, Omit<SupportPartner, 'partnerId'>>({
       query: (newPartner) => ({
-        url: 'partners',
+        url: 'supportpartner',
         method: 'POST',
         body: newPartner,
       }),
-      invalidatesTags: ['Partner'],
+      invalidatesTags: [{ type: 'SupportPartner', id: 'LIST' }],
     }),
 
-    // Update partner details (e.g., new phone number)
-    updateSupportPartner: builder.mutation<SupportPartner, { id: number; data: Partial<CreatePartnerRequest> }>({
-      query: ({ id, data }) => ({
-        url: `partners/${id}`,
+    // PUT /supportpartner/:id - Restricted to Patient (patientRoleAuth)
+    updateSupportPartner: builder.mutation<
+      { message: string }, 
+      Partial<SupportPartner> & { partnerId: number }
+    >({
+      query: ({ partnerId, ...patch }) => ({
+        url: `supportpartner/${partnerId}`,
         method: 'PUT',
-        body: data,
+        body: patch,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Partner', id }],
+      invalidatesTags: (_result, _error, { partnerId }) => [
+        { type: 'SupportPartner', id: partnerId },
+        { type: 'SupportPartner', id: 'LIST' }
+      ],
     }),
 
-    // Remove a support partner
+    // DELETE /supportpartner/:id - Restricted to Admin
     deleteSupportPartner: builder.mutation<{ message: string }, number>({
       query: (id) => ({
-        url: `partners/${id}`,
+        url: `supportpartner/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Partner'],
+      invalidatesTags: [{ type: 'SupportPartner', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
   useGetSupportPartnersQuery,
-  useGetPartnersByUserIdQuery,
+  useGetSupportPartnerByIdQuery,
   useCreateSupportPartnerMutation,
   useUpdateSupportPartnerMutation,
   useDeleteSupportPartnerMutation,
-} = partnerApi;
+} = supportPartnerApi;

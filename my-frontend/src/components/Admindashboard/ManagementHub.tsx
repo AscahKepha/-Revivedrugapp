@@ -10,7 +10,7 @@ import type { RootState } from '../../app/types';
 import { PuffLoader } from 'react-spinners';
 
 const cardVariants = {
-    hover: { scale: 1.02, transition: { type: "spring" as const , stiffness: 300 } },
+    hover: { scale: 1.02, transition: { type: "spring" as const, stiffness: 300 } },
     tap: { scale: 0.98 },
 };
 
@@ -30,7 +30,7 @@ export const ManagementHubPage = () => {
     // --- Data Processing ---
     const patients = usersData.filter((u: any) => u.userType === 'patient');
     const admins = usersData.filter((u: any) => u.userType === 'admin');
-    
+
     // Recovery Metrics
     const totalStreaks = patients.reduce((sum: number, p: any) => sum + (p.streak_days || 0), 0);
     const highRiskPatients = checkinsData.filter((c: any) => c.status === 'relapsed' || c.status === 'struggling').length;
@@ -134,7 +134,7 @@ export const ManagementHubPage = () => {
                                     ))}
                                 </Pie>
                                 <Tooltip />
-                                <Legend verticalAlign="bottom" height={36}/>
+                                <Legend verticalAlign="bottom" height={36} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>

@@ -1,110 +1,125 @@
-import { Request, Response } from "express";
-import { createSupportPartnerService, updateSupportPartnerServices, getSupportPartnerByIdService, getSupportPartnerServices, deleteSupportPartnerServices } from "./supportpartner.service";
-import { supportpartnersTable } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
-import db from "../drizzle/db";
+import { Request, Response, NextFunction } from "express";
+import { 
+    createSupportPartnerService, 
+    updateSupportPartnerServices, 
+    getSupportPartnerByIdService, 
+    getSupportPartnerServices, 
+    deleteSupportPartnerServices 
+} from "./supportpartner.service";
 
-
-export const getSupportPartnerController = async (req: Request, res: Response) => {
+/**
+ * GET /supportpartners
+ */
+export const getSupportPartnerController = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const allSupportPartners = await getSupportPartnerServices();
-        if (allSupportPartners == null || allSupportPartners.length == 0) {
-            res.status(404).json({messages: "No Support Partners found"});
-        } else {
-            res.status(200).json(allSupportPartners);
+        if (!allSupportPartners || allSupportPartners.length === 0) {
+            return res.status(404).json({ message: "No Support Partners found" });
         }
-    } catch (error:any) {
-        res.status(500).json({message: error.message || "error fetching Support Partners"});
+        return res.status(200).json(allSupportPartners);
+    } catch (error: any) {
+        next(error);
     }
 }
 
+/**
+ * GET /supportpartners/:id
+ */
+export const getSupportPartnerByIdController = async (req: Request, res: Response, next: NextFunction) => {
+    const supportPartnerId = parseInt(req.params.id as string);
 
-export const getSupportPartnerByIdController = async (req:Request, res:Response) => {
-    const SupportPartnerId = parseInt(req.params.id as string);
-    if (isNaN(SupportPartnerId)) {
-        res.status(400).json({message: "Invalid Support Partner Id"});
-        return;
+    if (isNaN(supportPartnerId)) {
+        return res.status(400).json({ message: "Invalid Support Partner Id" });
     }
+
     try {
-        const SupportPartner = await getSupportPartnerByIdService(SupportPartnerId)
-        if (SupportPartner == undefined ) {
-            res.status(404).json({message: "SupportPartners not found" });
-        }else {
-            res.status(200).json(SupportPartner);
+        const supportPartner = await getSupportPartnerByIdService(supportPartnerId);
+        if (!supportPartner) {
+            return res.status(404).json({ message: "Support Partner not found" });
         }
-    }catch (error: any){
-        res.status(500).json({error: error.message || "error fetching SupportPartner"});
+        return res.status(200).json(supportPartner);
+    } catch (error: any) {
+        next(error);
     }
 }
 
-export const createSupportPartnerController = async(req: Request, res:Response) => {
-    const { userId,partnerName, contactInfo, relationship} = req.body;
-    if(!userId || !partnerName || !contactInfo || !relationship) {
-        res.status(400).json({error: "All fields are required"});
-        return;
+/**
+ * POST /supportpartners
+ */
+export const createSupportPartnerController = async (req: Request, res: Response, next: NextFunction) => {
+    const { userId, partnerName, contactInfo, relationship } = req.body;
+
+    if (!userId || !partnerName || !contactInfo || !relationship) {
+        return res.status(400).json({ message: "All fields are required" });
     }
-    try{
-        const newSupportPartner = await createSupportPartnerService ({
-             userId,partnerName, contactInfo, relationship
+
+    try {
+        const resultMessage = await createSupportPartnerService({
+            userId, partnerName, contactInfo, relationship
         });
 
-        if (!newSupportPartner) {
-            res.status(500).json({message:"Failed to create SupportPartner"});
-        } else {
-            res.status(201).json(newSupportPartner);
+        if (!resultMessage) {
+            return res.status(500).json({ message: "Failed to create Support Partner" });
         }
-    } catch (error:any){  
-       res.status(500).json ({ error: error.message || "Failed to create SupportPartner" });
+        return res.status(201).json({ message: resultMessage });
+    } catch (error: any) {
+        next(error);
     }
 };
 
-export const updateSupportPartnerController = async(req:Request, res:Response) => {
-    const SupportPartnerId = parseInt(req.params.id as string);
-    if (isNaN(SupportPartnerId)) {
-        res.status(400).json({error: "Invalid SupportPartner Id"});
-        return;
+/**
+ * PUT /supportpartners/:id
+ */
+export const updateSupportPartnerController = async (req: Request, res: Response, next: NextFunction) => {
+    const supportPartnerId = parseInt(req.params.id as string);
+
+    if (isNaN(supportPartnerId)) {
+        return res.status(400).json({ message: "Invalid Support Partner Id" });
     }
-    const {userId,partnerName, contactInfo, relationship} = req.body;
-    if(!userId || !partnerName || !contactInfo || !relationship) {
-        res.status(400).json({error: "all fields is required"});
-        return;
+
+    const { userId, partnerName, contactInfo, relationship } = req.body;
+    // Note: Usually we check if at least one field is present for a PUT/PATCH
+    if (!userId || !partnerName || !contactInfo || !relationship) {
+        return res.status(400).json({ message: "All fields are required for a full update" });
     }
 
     try {
-        const existingSupportPartner = await getSupportPartnerByIdService(SupportPartnerId);
+        const existingSupportPartner = await getSupportPartnerByIdService(supportPartnerId);
         if (!existingSupportPartner) {
-            res.status(404).json({message: "SupportPartner not found"});
-            return;
+            return res.status(404).json({ message: "Support Partner not found" });
         }
-        const updatedSupportPartner = await updateSupportPartnerServices(SupportPartnerId, {
-            userId,partnerName, contactInfo, relationship
+
+        const resultMessage = await updateSupportPartnerServices(supportPartnerId, {
+            userId, partnerName, contactInfo, relationship
         });
-        if (updatedSupportPartner == null) {
-            res.status(404).json({message: "SupportPartner not found or failed to update"});
-        }else{
-            res.status(200).json({message:updatedSupportPartner});
+
+        if (!resultMessage) {
+            return res.status(404).json({ message: "Support Partner not found or failed to update" });
         }
-    }catch (error:any){
-        res.status(500).json({error:error.message || "Failed to update SupportPartner "})
+        return res.status(200).json({ message: resultMessage });
+    } catch (error: any) {
+        next(error);
     }
 }
 
+/**
+ * DELETE /supportpartners/:id
+ */
+export const deleteSupportPartnerController = async (req: Request, res: Response, next: NextFunction) => {
+    const supportPartnerId = parseInt(req.params.id as string);
 
-export const deleteSupportPartnerController = async(req:Request, res:Response) => {
-    const SupportPartnerId = parseInt(req.params.id as string);
-    if (isNaN(SupportPartnerId)){ 
-        res.status(400).json({message: "Invalid SupportPartner Id"});
-        return;
+    if (isNaN(supportPartnerId)) {
+        return res.status(400).json({ message: "Invalid Support Partner Id" });
     }
-    try{
-        const deletedSupportPartner = await deleteSupportPartnerServices(SupportPartnerId);
-        if (deletedSupportPartner) {
-            res.status(200).json({message: "SupportPartner deleted "});
 
-        }else {
-            res.status(404).json({message: "SupportPartner not found"});
+    try {
+        const resultMessage = await deleteSupportPartnerServices(supportPartnerId);
+        if (resultMessage) {
+            return res.status(200).json({ message: resultMessage });
+        } else {
+            return res.status(404).json({ message: "Support Partner not found" });
         }
-    }catch  (error:any){
-        res.status(500).json({error:error.message || "failed to delete SupportPartner"});
+    } catch (error: any) {
+        next(error);
     }
 }

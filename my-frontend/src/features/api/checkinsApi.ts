@@ -1,6 +1,41 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
-import { type Checkin, type CreateCheckinRequest, type CheckinResponse } from '../../types/index';
+
+// Interface based on your checkinTable schema
+export interface Checkin {
+  checkinId: number;
+  userId: number;
+  cravings: number;
+  control: number;
+  selfEfficacy: number;
+  consequences: boolean;
+  copingUsed: string;
+  notes: string;
+  createdAt?: string;
+}
+
+// Request interface for the POST body
+export interface CreateCheckinRequest {
+  userId: number;
+  cravings: number;
+  control: number;
+  selfEfficacy: number;
+  consequences: boolean;
+  copingUsed: string;
+  notes: string;
+}
+
+// Response interface for the consolidated create response
+export interface CreateCheckinResponse {
+  message: string;
+  streakMessage: string;
+  riskStatus: string;
+  data: Checkin;
+  metrics: {
+    score: number;
+    riskLevel: 'low' | 'medium' | 'high';
+  };
+}
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -16,49 +51,61 @@ export const checkinsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Checkin', 'User'], // 'User' tag helps refresh streaks on the UI
+  tagTypes: ['Checkin', 'User', 'RiskScore'],
   endpoints: (builder) => ({
-
-    // Get all checkins (For Admin Dashboard)
+    
+    // GET /checkins - Admin only
     getAllCheckins: builder.query<Checkin[], void>({
       query: () => 'checkins',
-      providesTags: ['Checkin'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ checkinId }) => ({ type: 'Checkin' as const, id: checkinId })),
+              { type: 'Checkin', id: 'LIST' },
+            ]
+          : [{ type: 'Checkin', id: 'LIST' }],
     }),
 
-    // Get a specific checkin by ID
+    // GET /checkins/:id - Patients or Partners
     getCheckinById: builder.query<Checkin, number>({
       query: (id) => `checkins/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Checkin', id }],
     }),
 
-    // The Main Check-in Action
-    createCheckin: builder.mutation<CheckinResponse, CreateCheckinRequest>({
+    /**
+     * POST /checkins - The core "Daily Check-in" action
+     * This triggers risk score calculation and streak increments on the backend.
+     */
+    createCheckin: builder.mutation<CreateCheckinResponse, CreateCheckinRequest>({
       query: (newCheckin) => ({
         url: 'checkins',
         method: 'POST',
         body: newCheckin,
       }),
-      // This invalidates 'User' so the streak count updates on the Profile/Dashboard
-      invalidatesTags: ['Checkin', 'User'],
+      // We invalidate User and RiskScore because this call updates those tables too!
+      invalidatesTags: ['Checkin', 'User', 'RiskScore'],
     }),
 
-    // Update a checkin
-    updateCheckin: builder.mutation<Checkin, { id: number; data: Partial<CreateCheckinRequest> }>({
-      query: ({ id, data }) => ({
-        url: `checkins/${id}`,
+    // PUT /checkins/:id - Admin only
+    updateCheckin: builder.mutation<{ checkin: string }, Partial<Checkin> & { checkinId: number }>({
+      query: ({ checkinId, ...patch }) => ({
+        url: `checkins/${checkinId}`,
         method: 'PUT',
-        body: data,
+        body: patch,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Checkin', id }, 'Checkin'],
+      invalidatesTags: (_result, _error, { checkinId }) => [
+        { type: 'Checkin', id: checkinId },
+        { type: 'Checkin', id: 'LIST' }
+      ],
     }),
 
-    // Delete a checkin
-    deleteCheckin: builder.mutation<{ message: string }, number>({
+    // DELETE /checkins/:id - Admin only
+    deleteCheckin: builder.mutation<{ checkin: string }, number>({
       query: (id) => ({
         url: `checkins/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Checkin'],
+      invalidatesTags: [{ type: 'Checkin', id: 'LIST' }],
     }),
   }),
 });
