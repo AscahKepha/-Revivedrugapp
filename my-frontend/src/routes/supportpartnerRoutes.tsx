@@ -3,12 +3,15 @@ import ProtectedRoute from "../protectedRoutes";
 import SupportPartnerLayout from "../layouts/SupportpartnerLayout";
 
 // Pages
-import SupportPartnerProfile from "../components/support-Partnerdashboard/supportpartnerprofile";
+/** * Importing the unified profile component.
+ * We alias it as SupportPartnerProfile to maintain consistency with your naming convention.
+ */
+import SupportPartnerProfile from "../components/profile/profile";
 import ActionCenter from "../components/support-Partnerdashboard/Actioncenter";
 import PatientHistory from "../components/support-Partnerdashboard/patienthistory";
 import SupportPartnerDashboard from "../components/support-Partnerdashboard/supportpartnerdashboard";
 
-// ✅ FIXED: Guard wrapper (no children, Outlet handled inside ProtectedRoute)
+// ✅ SupportPartnerGuard ensures only partners can access these routes
 const SupportPartnerGuard = () => {
   return <ProtectedRoute allowedRole="support_partner" />;
 };
@@ -20,7 +23,7 @@ export const supportPartnerRoutes = {
     {
       element: <SupportPartnerLayout />,
       children: [
-        // Default landing
+        // Default landing: The Support Partner's main dashboard
         { index: true, element: <SupportPartnerDashboard /> },
 
         // Core Features
@@ -28,10 +31,16 @@ export const supportPartnerRoutes = {
         { path: "action-center", element: <ActionCenter /> },
         { path: "patient-history", element: <PatientHistory /> },
 
-        // Profile
+        /**
+         * Support Partner Profile
+         * Now uses the central profile component which handles:
+         * - Cloudinary image uploads
+         * - Password updates via UserApi
+         * - Identity verification badges
+         */
         { path: "profile", element: <SupportPartnerProfile /> },
 
-        // Fallback
+        // Fallback: Redirect to dashboard if route is unrecognized
         { path: "*", element: <Navigate to="dashboard" replace /> }
       ]
     }

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { 
   LayoutDashboard, 
   Users, 
@@ -8,13 +7,9 @@ import {
   BarChart3, 
   Menu, 
   HeartPulse,
-  Settings,
-  HelpCircle,
-  Activity
 } from 'lucide-react';
 
-import type { RootState } from '../app/store';
-import { NavbarH } from '../components/Home/Navbarhome'; // Main Navbar integration
+import { NavbarH } from '../components/Home/Navbarhome';
 import Logout from '../components/Logout';
 import Footerp from '../components/patientdashboard/footerp';
 
@@ -25,22 +20,11 @@ const navItems = [
   { to: '/patient/scores', icon: <BarChart3 size={20} />, label: 'Recovery Scores' },
 ];
 
-const secondaryNav = [
-  { to: '/patient/settings', icon: <Settings size={20} />, label: 'Settings' },
-  { to: '/patient/help', icon: <HelpCircle size={20} />, label: 'Help & Support' },
-];
+// secondaryNav and Preferences section removed as per request
 
 const PatientLayout: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  
-  // Connect to Redux Auth State
-  const { user, userType } = useSelector((state: RootState) => state.auth);
-
-  // Helper for initials
-  const getInitials = (name: string) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'PT';
-  };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden font-sans">
@@ -82,26 +66,6 @@ const PatientLayout: React.FC = () => {
             </Link>
           </div>
 
-          {/* Dynamic Patient Card */}
-          <div className="px-6 pb-6 mb-2 border-b border-slate-100">
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xs shadow-md">
-                {getInitials(user?.userName || 'Patient')}
-              </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="text-xs font-black text-slate-900 uppercase tracking-tight truncate">
-                  {user?.userName || 'User'}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Activity size={10} className="text-emerald-500" />
-                  <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">
-                    {userType || 'Patient'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Navigation Section */}
           <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-8 custom-scrollbar">
             {/* Main Links */}
@@ -126,33 +90,6 @@ const PatientLayout: React.FC = () => {
                       <span className={location.pathname === item.to ? 'text-emerald-600' : 'text-slate-300'}>
                         {item.icon}
                       </span>
-                      {item.label}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Secondary Links */}
-            <div>
-              <h3 className="px-5 mb-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">
-                Preferences
-              </h3>
-              <ul className="space-y-1.5">
-                {secondaryNav.map((item) => (
-                  <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      onClick={() => setSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-[11px] font-black uppercase tracking-widest ${
-                          isActive
-                            ? 'text-emerald-600 bg-emerald-50 border border-emerald-100 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-                        }`
-                      }
-                    >
-                      <span className="text-slate-300">{item.icon}</span>
                       {item.label}
                     </NavLink>
                   </li>

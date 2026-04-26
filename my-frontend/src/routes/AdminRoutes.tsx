@@ -1,9 +1,12 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import ProtectedRoute from "../protectedRoutes";
 import AdminLayout from "../layouts/AdminLayout";
 
 // Pages
-import AdminProfile from "../components/Admindashboard/adminprofile";
+/** * We use the same central profile component. 
+ * The logic inside will automatically adapt to the "admin" role.
+ */
+import AdminProfile from "../components/profile/profile"; 
 import ManagementHub from "../components/Admindashboard/ManagementHub";
 import AllPatients from "../components/Admindashboard/Allpatients";
 import AllSupportPartners from "../components/Admindashboard/AllSupportpartners";
@@ -11,7 +14,7 @@ import ActionLogs from "../components/Admindashboard/ActionLogs";
 import CheckinHistory from "../components/Admindashboard/CheckinHistory";
 import SupportNetwork from "../components/Admindashboard/SupportNetwork";
 
-// ✅ FIXED: AdminGuard (no children, Outlet handled inside ProtectedRoute)
+// ✅ AdminGuard handles the role-based protection
 const AdminGuard = () => {
   return <ProtectedRoute allowedRole="admin" />;
 };
@@ -29,6 +32,11 @@ export const adminRoutes = {
         // Core Management
         { path: "management", element: <ManagementHub /> },
         { path: "logs", element: <ActionLogs /> },
+        
+        /**
+         * Admin Profile Route
+         * Points to the refined UserProfilePage (imported as AdminProfile)
+         */
         { path: "profile", element: <AdminProfile /> },
 
         // User Management
@@ -39,7 +47,7 @@ export const adminRoutes = {
         // Data & History
         { path: "checkin-history", element: <CheckinHistory /> },
 
-        // Fallback
+        // Fallback: Redirects back to the main management hub if route not found
         { path: "*", element: <Navigate to="." replace /> }
       ]
     }

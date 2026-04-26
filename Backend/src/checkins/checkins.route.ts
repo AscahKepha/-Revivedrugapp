@@ -4,39 +4,46 @@ import {
     getCheckinsByIdController, 
     createCheckinsController, 
     deleteCheckinsController, 
-    updateCheckinsController 
+    updateCheckinsController,
+    getCheckinStatsController // Import the new stats controller
 } from "./checkins.controller";
-// Corrected import name to supportPartnerRoleAuth to match bearAuth.ts
 import { 
     adminRoleAuth, 
     patientRoleAuth, 
-    supportPartnerRoleAuth, 
     allRoleAuth 
 } from "../middleware/bearAuth";
 
 export const CheckinsRouter = Router();
 
 /**
+ * GET /checkins/stats/:userId
+ * Access: allRoleAuth (Patients see their stats, Partners check up on them)
+ * This feeds the "Recovery Pulse" metrics on the frontend.
+ */
+CheckinsRouter.get('/checkins/stats/:userId', allRoleAuth, getCheckinStatsController);
+
+/**
  * GET /checkins
- * Access: Admin only (for system-wide overview)
+ * Access: Admin only
  */
 CheckinsRouter.get('/checkins', adminRoleAuth, getCheckinsController);
 
 /**
  * GET /checkins/:id
- * Access: allRoleAuth (Patients viewing their history or Partners checking up on them)
+ * Access: allRoleAuth
  */
 CheckinsRouter.get('/checkins/:id', allRoleAuth, getCheckinsByIdController);
 
 /**
  * POST /checkins
- * Access: patientRoleAuth (Only patients should be creating their own check-ins)
+ * Access: patientRoleAuth
+ * Triggers risk calculation and streak updates
  */
 CheckinsRouter.post('/checkins', patientRoleAuth, createCheckinsController);
 
 /**
  * PUT /checkins/:id
- * Access: Admin only (Prevents users from tampering with past recovery data)
+ * Access: Admin only
  */
 CheckinsRouter.put('/checkins/:id', adminRoleAuth, updateCheckinsController);
 

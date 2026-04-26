@@ -6,26 +6,26 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
+    console.log("📥 Registration attempt received:", req.body.email);
     try {
         const { firstName, lastName, email, password, contactPhone, address, role } = req.body;
 
-        // 1. Validation based on your Drizzle schema and Frontend requirements
         if (!firstName || !lastName || !email || !password || !contactPhone) {
+            console.warn("⚠️ Registration failed: Missing fields");
             res.status(400).json({ message: "Missing required fields" });
             return;
         }
 
-        // 2. Check if user already exists
+        console.log("🔍 Checking if user exists in DB...");
         const existingUser = await getUserByEmailService(email);
+
         if (existingUser) {
+            console.warn("⚠️ Registration failed: Email already exists");
             res.status(409).json({ message: "User with this email already exists" });
             return;
         }
 
-        // 3. Prepare data for Drizzle Table
-        // Combining names to match the 'userName' column in your schema
         const fullName = `${firstName} ${lastName}`;
-        
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -35,13 +35,13 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
             password: hashedPassword,
             contactPhone,
             address: address || null,
-            userType: role || "patient", // Matches roleEnum in your schema
+            userType: role || "patient",
         };
 
-        // 4. Save to Database
+        console.log("💾 Attempting to save new user to DB...");
         const newUser = await createUserService(userData);
+        console.log("✅ User saved successfully:", newUser.userId);
 
-        // 5. Generate Token so they are logged in immediately after registration
         const payload = {
             userId: newUser.userId,
             email: newUser.email,
@@ -50,7 +50,6 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
-        // 6. Response (matches BackendLoginResponse type on frontend)
         res.status(201).json({
             message: "User created successfully",
             token,
@@ -64,23 +63,30 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
             }
         });
     } catch (error: any) {
+        console.error("🔥 Registration Controller Error:", error);
         next(error);
     }
 };
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
+    console.log("🔑 Login attempt received for:", email);
 
     try {
+        console.log("🔍 Fetching user from DB...");
+        // THIS IS LIKELY WHERE YOUR 500 ERROR IS TRIGGERED
         const existingUser = await getUserByEmailService(email);
-        
+
         if (!existingUser) {
+            console.warn("⚠️ Login failed: User not found");
             res.status(404).json({ message: "Invalid email or password" });
             return;
         }
 
+        console.log("🔐 User found. Verifying password...");
         const isMatchPasswords = await bcrypt.compare(password, existingUser.password);
         if (!isMatchPasswords) {
+            console.warn("⚠️ Login failed: Password mismatch");
             res.status(401).json({ message: "Invalid email or password" });
             return;
         }
@@ -93,6 +99,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
+        console.log("✅ Login successful for:", email);
         res.status(200).json({
             token,
             user: {
@@ -105,6 +112,9 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             }
         });
     } catch (error: any) {
+        console.error("🔥 Login Controller Error Details:");
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
         next(error);
     }
 };

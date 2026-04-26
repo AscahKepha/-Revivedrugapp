@@ -6,27 +6,41 @@ import {
     deleteActionsController, 
     updateActionsController 
 } from "./partnerAction.controller";
-//  Corrected the import name from support_partner to supportPartnerRoleAuth
 import { 
     adminRoleAuth, 
-    patientRoleAuth, 
     supportPartnerRoleAuth, 
     allRoleAuth 
 } from "../middleware/bearAuth";
 
 export const ActionsRouter = Router();
 
-// Get all actions (Admin only)
-ActionsRouter.get('/actions', adminRoleAuth, getActionsController);
+/**
+ * GET /actions
+ * UPDATED: Changed from adminRoleAuth to allRoleAuth.
+ * This allows Patients and Partners to see the "Intervention Score" page.
+ */
+ActionsRouter.get('/actions', allRoleAuth, getActionsController);
 
-// Get specific action (Accessible to everyone authorized)
+/**
+ * GET /actions/:id
+ * Access: allRoleAuth (Viewing a specific intervention detail)
+ */
 ActionsRouter.get('/actions/:id', allRoleAuth, getActionsByIdController);
 
-//  Create action (Corrected middleware name)
+/**
+ * POST /actions
+ * Access: supportPartnerRoleAuth (Only partners log interventions)
+ */
 ActionsRouter.post('/actions', supportPartnerRoleAuth, createActionsController);
 
-//  Update action (Corrected middleware name)
+/**
+ * PUT /actions/:id
+ * Access: supportPartnerRoleAuth (Partners can update their own notes)
+ */
 ActionsRouter.put('/actions/:id', supportPartnerRoleAuth, updateActionsController);
 
-// Delete action (Admin only)
+/**
+ * DELETE /actions/:id
+ * Access: adminRoleAuth (Only admins can hard-delete logs)
+ */
 ActionsRouter.delete('/actions/:id', adminRoleAuth, deleteActionsController);

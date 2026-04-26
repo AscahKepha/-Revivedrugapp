@@ -3,6 +3,7 @@ import { FaQuoteLeft, FaStar } from 'react-icons/fa';
 import Container from '../components/container';
 import Sarah from "../assets/Screenshot 2026-04-23 141852.png";
 import john from "../assets/Screenshot 2026-04-23 142318.png"
+import { NavbarH } from '../components/Home/Navbarhome';
 
 // Import your images here
 // import User1 from "../assets/user1.png"; 
@@ -35,6 +36,7 @@ const Testimonials: React.FC = () => {
     return (
         <section className="py-20 bg-teal-50/30 min-h-screen font-inter">
             <Container>
+                <NavbarH />
                 {/* Header */}
                 <div className="text-center max-w-2xl mx-auto mb-16">
                     <h2 className="text-teal-600 font-bold tracking-widest uppercase text-sm mb-3">Voices of Success</h2>

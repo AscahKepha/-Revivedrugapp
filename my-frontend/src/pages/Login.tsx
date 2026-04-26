@@ -21,57 +21,66 @@ export const Login: React.FC = () => {
         event.preventDefault();
         setLoginError(null);
 
+        // LOG 1: Check what is being sent to the server
+        console.log("🚀 Login Attempt Started", { email, password: " [HIDDEN]" });
+
         try {
             const response: BackendLoginResponse = await loginUser({
                 email,
                 password,
             }).unwrap();
 
+            // LOG 2: Check the full server response
+            console.log("✅ Server Response Received:", response);
+
             const user = response.user;
 
             if (!user || !user.userId) {
+                console.error("❌ Data Integrity Error: Missing userId in response");
                 toast.error("Login failed: Missing user data.");
                 return;
             }
 
-            // ✅ Sync with Redux and LocalStorage
-            // Removed profile_picture as it doesn't exist in your schema
+            // Sync with Redux
             dispatch(
                 setCredentials({
                     token: response.token,
                     user: {
                         ...user,
-                        address: user.address ?? null, // Standardizing optional fields
+                        address: user.address ?? null,
                     },
                 })
             );
 
             toast.success(`Welcome back, ${user.userName}!`);
 
-            // Role-based navigation using your UserRole type
             const role = user.userType as UserRole;
-            
-        
+            console.log(`🌐 Navigating based on role: ${role}`);
             
             switch (role) {
                 case "admin":
-                    // Matches: path: "/admindashboard" in adminRoutes
                     navigate("/admindashboard");
                     break;
                 case "support_partner":
-                    // Matches: path: "/partner" in supportPartnerRoutes
                     navigate("/partner");
                     break;
                 case "patient":
-                    // Matches: path: "/patient" in patientRoutes
                     navigate("/patient");
                     break;
                 default:
+                    console.warn("⚠️ Unknown role detected, defaulting to home.");
                     navigate("/"); 
                     break;
             }
 
         } catch (error: any) {
+            // LOG 3: Detailed error logging for that 500 status
+            console.group("❌ Login Error Caught");
+            console.error("Status Code:", error?.status);
+            console.error("Error Data:", error?.data);
+            console.error("Raw Error:", error);
+            console.groupEnd();
+
             const errorMessage = error?.data?.message || "Login failed. Please check your credentials.";
             setLoginError(errorMessage);
             toast.error(errorMessage);

@@ -2,12 +2,13 @@ import React from "react";
 import { FaPhoneAlt, FaEnvelope, FaInstagram, FaPaperPlane, FaUser, FaBullhorn, FaHandsHelping } from 'react-icons/fa';
 // Ensure this path matches your folder structure
 import contactImage from '../assets/Screenshot 2026-04-23 125632.png'; 
+// import { NavbarH } from "../components/Home/Navbarhome";
 
 export const Contact: React.FC = () => {
     return (
         <section className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center font-inter">
             <div className="max-w-6xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden md:grid md:grid-cols-2 gap-0 border border-teal-100">
-        
+                
                 {/* Left Section: Image & Brand Intro */}
                 <div className="relative bg-teal-700 flex flex-col items-center justify-center p-8 text-white">
                     <div className="z-10 text-center mb-6">

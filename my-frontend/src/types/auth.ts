@@ -1,4 +1,5 @@
-/** * Matches the roleEnum defined in your Drizzle schema.
+/**
+ * Matches the roleEnum defined in your Drizzle schema.
  */
 export type UserRole = "patient" | "support_partner" | "admin";
 
@@ -8,11 +9,12 @@ export type UserRole = "patient" | "support_partner" | "admin";
  */
 export interface BackendUser {
   userId: number; 
-  userName: string; // Combined firstName and lastName from the frontend
+  userName: string; 
   email: string; 
   userType: UserRole; 
   contactPhone: string; 
   address: string | null; 
+  profile_picture?: string; // ADDED: Matches your database column for the Cloudinary URL
   streak_days: number;
   longest_streak: number;
   createdAt: string; 
@@ -21,8 +23,6 @@ export interface BackendUser {
 
 /**
  * Interface used for the Redux Auth State.
- * Using an alias here makes it easier to extend if the UI needs
- * extra local-only properties later.
  */
 export interface UserProfile extends BackendUser {}
 
@@ -45,7 +45,6 @@ export interface LoginCredentials {
 
 /**
  * Data required for the Registration flow.
- * Note: These match the state variables used in your teal Signin component.
  */
 export interface RegisterCredentials extends LoginCredentials {
   firstName: string;
@@ -53,6 +52,7 @@ export interface RegisterCredentials extends LoginCredentials {
   role: UserRole;
   contactPhone: string;
   address: string;
+  profile_picture?: string; // Optional: can be set during registration or default
 }
 
 /**

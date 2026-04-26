@@ -3,9 +3,9 @@ import Container from '../container'; // Keeping everything aligned
 
 export const IntroS: React.FC = () => {
     return (
-        <section className="py-12 bg-white">
+        <section className="py-6 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50">
             <Container>
-                <div className="text-center md:text-left max-w-3xl">
+                <div className="text-center md:text-left max-w-6xl">
                     {/* The "Cute" Title */}
                     <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
                         <span className="text-teal-600">Drug-</span>
@@ -26,8 +26,6 @@ export const IntroS: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* Small decorative line */}
-                    <div className="mt-8 h-1.5 w-24 bg-gradient-to-r from-teal-400 to-emerald-300 rounded-full"></div>
                 </div>
             </Container>
         </section>

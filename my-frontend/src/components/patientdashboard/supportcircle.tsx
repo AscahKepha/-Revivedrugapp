@@ -1,22 +1,78 @@
-import React from 'react';
 import { useSelector } from 'react-redux';
-import { HeartHandshake, Phone, ShieldAlert, CheckCircle2, MessageCircle, ArrowRight } from 'lucide-react';
-import { userApi } from '../../features/api/userApi';
+import { 
+  HeartHandshake, 
+  Phone, 
+  ShieldAlert, 
+  CheckCircle2, 
+  MessageCircle, 
+  ArrowRight,
+  Loader2 
+} from 'lucide-react';
 import { type RootState } from '../../app/types';
 import { Button } from '../ui/button';
 
+// API Hooks
+import { useGetSupportPartnerByIdQuery } from '../../features/api/partnerApi';
+import { useGetActionsQuery, useCreateActionMutation, useUpdateActionMutation } from '../../features/api/actionsApi';
+
 const SupportCircle = () => {
+  // 1. Auth Context
   const { user } = useSelector((state: RootState) => state.auth);
   const userId = user?.userId;
 
-  // 1. Fetching the data - this should return the joined partner details
-  const { data: userDetails, isLoading } = userApi.useGetUserByIdQuery(userId as number, { skip: !userId });
+  // 2. Fetch Partner Data (Relationship, Name, Phone)
+  const { data: partner, isLoading: partnerLoading } = useGetSupportPartnerByIdQuery(userId as number, { 
+    skip: !userId 
+  });
+
+  // 3. Fetch Action Plan (Current tasks for the patient)
+  const { data: actions, isLoading: actionsLoading } = useGetActionsQuery();
+
+  // 4. Mutations for User Interaction
+  const [triggerSOS, { isLoading: isSendingSOS }] = useCreateActionMutation();
+  const [completeAction] = useUpdateActionMutation();
+
+  // Handle Emergency Signal
+  const handleSOS = async () => {
+    if (!userId || !partner) return;
+    try {
+      await triggerSOS({
+        userId,
+        partnerId: partner.partnerId,
+        success: false, 
+        actionDescription: "EMERGENCY: SOS Signal activated from Support Circle"
+      }).unwrap();
+      alert("SOS Signal Sent. Your partner has been notified.");
+    } catch (err) {
+      console.error("SOS activation failed:", err);
+    }
+  };
+
+  // Handle Task Completion (The Arrow button)
+  const handleResolveAction = async (id: number) => {
+    try {
+      await completeAction({ id, data: { success: true } }).unwrap();
+    } catch (err) {
+      console.error("Failed to update task:", err);
+    }
+  };
+
+  if (partnerLoading || actionsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+          <p className="font-black uppercase tracking-widest text-gray-400">Loading Support Circle...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header: Your Guardian / Support Partner */}
+        {/* Header: Support Partner Details */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 md:p-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -26,21 +82,21 @@ const SupportCircle = () => {
               <div className="text-center md:text-left">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">Your Support Partner</p>
                 <h1 className="text-3xl font-black text-gray-900 tracking-tighter">
-                  {userDetails?.partnerName || "Assigning Partner..."}
+                  {partner?.partnerName || "No Partner Assigned"}
                 </h1>
                 <div className="flex items-center gap-4 mt-3 justify-center md:justify-start">
                   <span className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
-                    <Phone size={14} className="text-emerald-500" /> {userDetails?.contactPhone || "--- --- ---"}
+                    <Phone size={14} className="text-emerald-500" /> {partner?.contactInfo || "--- --- ---"}
                   </span>
                   <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase">
-                    {userDetails?.relationship || "Primary Support"}
+                    {partner?.relationship || "Primary Support"}
                   </span>
                 </div>
               </div>
             </div>
             
             <div className="flex gap-3 w-full md:w-auto">
-              <Button className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-14 px-8 font-black uppercase text-xs tracking-widest">
+              <Button className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-14 px-8 font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-emerald-100">
                 <MessageCircle size={18} className="mr-2" /> Message
               </Button>
             </div>
@@ -53,41 +109,43 @@ const SupportCircle = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">Assigned Action Plan</h3>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Updated Today</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Updates</span>
             </div>
 
-            {/* List of Actions from the Partner */}
             <div className="space-y-4">
-              <ActionCard 
-                title="Morning Reflection" 
-                desc="Log your mood and energy levels before 9:00 AM."
-                time="Daily"
-                isCompleted={true}
-              />
-              <ActionCard 
-                title="Hydration & Nutrition" 
-                desc="Ensure 3L water intake and balanced meals to stabilize brain chemistry."
-                time="On-going"
-              />
-              <ActionCard 
-                title="Weekly Counseling" 
-                desc="Virtual session with your support partner via Zoom."
-                time="Friday, 4PM"
-              />
+              {actions && actions.length > 0 ? (
+                actions.map((action) => (
+                  <ActionCard 
+                    key={action.actionId}
+                    title={action.actionDescription} 
+                    time={new Date(action.createdAt!).toLocaleDateString()}
+                    isCompleted={action.success}
+                    onResolve={() => handleResolveAction(action.actionId)}
+                  />
+                ))
+              ) : (
+                <div className="p-12 bg-white rounded-[2rem] border border-dashed text-center text-gray-400 font-bold italic">
+                  No actions currently assigned.
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Emergency / Support sidebar */}
+          {/* Emergency / SOS Sidebar */}
           <div className="space-y-6">
              <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden group">
                 <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all"></div>
                 <ShieldAlert className="text-red-500 mb-4" size={32} />
                 <h3 className="text-xl font-black uppercase tracking-tight mb-2">SOS Intervention</h3>
                 <p className="text-gray-400 text-xs font-medium leading-relaxed mb-6">
-                  Feeling overwhelmed or experiencing a high craving? Activate the alert to notify your partner immediately.
+                  Feeling overwhelmed? Click below to notify {partner?.partnerName || 'your partner'} immediately.
                 </p>
-                <Button className="w-full bg-red-600 hover:bg-red-700 text-white h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-900/20">
-                  Signal for Help
+                <Button 
+                  onClick={handleSOS}
+                  disabled={isSendingSOS}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-900/20 disabled:bg-gray-800"
+                >
+                  {isSendingSOS ? "Signaling..." : "Signal for Help"}
                 </Button>
              </div>
 
@@ -107,9 +165,9 @@ const SupportCircle = () => {
   );
 };
 
-// Sub-components
-const ActionCard = ({ title, desc, time, isCompleted }: any) => (
-  <div className={`p-6 rounded-[2rem] border transition-all ${isCompleted ? 'bg-emerald-50/30 border-emerald-100' : 'bg-white border-gray-100 hover:shadow-md'}`}>
+// Internal Sub-components
+const ActionCard = ({ title, time, isCompleted, onResolve }: any) => (
+  <div className={`p-6 rounded-[2rem] border transition-all ${isCompleted ? 'bg-emerald-50/30 border-emerald-100 opacity-60' : 'bg-white border-gray-100 hover:shadow-md'}`}>
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-4">
         <div className={`mt-1 ${isCompleted ? 'text-emerald-500' : 'text-gray-300'}`}>
@@ -117,14 +175,16 @@ const ActionCard = ({ title, desc, time, isCompleted }: any) => (
         </div>
         <div>
           <h4 className={`font-black text-lg ${isCompleted ? 'text-emerald-900 line-through' : 'text-gray-900'}`}>{title}</h4>
-          <p className="text-gray-500 text-xs font-medium mt-1 leading-relaxed">{desc}</p>
           <div className="mt-3 inline-block px-3 py-1 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-black text-gray-400 uppercase">
             {time}
           </div>
         </div>
       </div>
       {!isCompleted && (
-        <button className="p-2 bg-gray-50 rounded-xl text-gray-400 hover:text-emerald-600 transition-colors">
+        <button 
+          onClick={onResolve}
+          className="p-2 bg-gray-50 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+        >
           <ArrowRight size={18} />
         </button>
       )}
@@ -139,4 +199,4 @@ const ResourceLink = ({ label }: { label: string }) => (
   </button>
 );
 
-export default SupportCircle
+export default SupportCircle;

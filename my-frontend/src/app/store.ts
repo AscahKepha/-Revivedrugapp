@@ -20,12 +20,12 @@ import authReducer from "../features/auth/authSlice";
 // APIs
 import { userApi } from "../features/api/userApi";
 import { checkinsApi } from "../features/api/checkinsApi";
-import { chatRoomsApi } from "../features/api/chatroomApi";
+// Changed 'chatRoomsApi' to 'chatRoomApi' to match your API file export
+import { chatRoomApi } from "../features/api/chatroomApi"; 
 import { messagesApi } from "../features/api/messagesApi";
-import { partnerApi } from "../features/api/partnerApi";
 import { supportActionsApi } from "../features/api/actionsApi";
-// If you have a separate authApi for login/register, import it here:
 import { authApi } from "../features/api/authApi";
+import { supportPartnerApi } from "../features/api/partnerApi";
 
 // Persist config for Auth
 const authPersistConfig = {
@@ -41,9 +41,9 @@ export const store = configureStore({
     // API Reducers
     [userApi.reducerPath]: userApi.reducer,
     [checkinsApi.reducerPath]: checkinsApi.reducer,
-    [chatRoomsApi.reducerPath]: chatRoomsApi.reducer,
+    [chatRoomApi.reducerPath]: chatRoomApi.reducer,
     [messagesApi.reducerPath]: messagesApi.reducer,
-    [partnerApi.reducerPath]: partnerApi.reducer,
+    [supportPartnerApi.reducerPath]: supportPartnerApi.reducer,
     [supportActionsApi.reducerPath]: supportActionsApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
 
@@ -60,11 +60,11 @@ export const store = configureStore({
     }).concat(
       userApi.middleware,
       checkinsApi.middleware,
-      chatRoomsApi.middleware,
+      chatRoomApi.middleware,
       messagesApi.middleware,
-      partnerApi.middleware,
+      supportPartnerApi.middleware,
       supportActionsApi.middleware,
-      // authApi.middleware
+      authApi.middleware // Enabled this to prevent potential auth errors
     ),
 });
 

@@ -9,22 +9,23 @@ export const roleEnum = pgEnum("role", ["patient", "support_partner", "admin"]);
 export const riskLevelEnum = pgEnum("risk_level", ["low", "medium", "high"]);
 
 
-// Tables
+// Fixed Schema
 export const userTable = pgTable("users", {
-  userId: serial("userId").primaryKey(),
-  userName: text("userName").notNull(),
-  email: varchar("email").unique(),
-  password: varchar("password").notNull(),
-  contactPhone: varchar("contact_phone", { length: 20 }).notNull(),
-  streak_days: integer("streak_days").default(0),
-  longest_streak: integer("longest_streak").default(0),
-  address: text("address"),
-  userType: roleEnum("userType").default("patient"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+    // The first argument is the DB column name. Keep these lowercase!
+    userId: serial("userid").primaryKey(),
+    userName: text("username").notNull(),
+    email: varchar("email").unique(),
+    password: varchar("password").notNull(),
+    contactPhone: varchar("contact_phone", { length: 20 }).notNull(),
+    streak_days: integer("streak_days").default(0),
+    longest_streak: integer("longest_streak").default(0),
+    address: text("address"),
+    userType: roleEnum("usertype").default("patient"), // Changed "userType" to "usertype"
+    createdAt: timestamp("createdat").defaultNow(),     // Changed "createdAt" to "createdat"
+    updatedAt: timestamp("updatedat").defaultNow(),     // Changed "updatedAt" to "updatedat"
 });
 
-export const checkinTable = pgTable("daily-checkins",{
+export const checkinTable = pgTable("daily-checkins", {
     checkinId: serial("checkinId").primaryKey(),
     userId: integer("userId").references(() => userTable.userId),
     checkinAt: timestamp("checkinAt").defaultNow().notNull(),
@@ -37,18 +38,18 @@ export const checkinTable = pgTable("daily-checkins",{
     createdAt: timestamp("createdAt").defaultNow(),
     updatedAt: timestamp("updatedAt").defaultNow(),
 },
-(table) => ({
-    cravingRange: check("craving_range",
-        sql`${table.cravings} BETWEEN 1 AND 10`
-    ),
+    (table) => ({
+        cravingRange: check("craving_range",
+            sql`${table.cravings} BETWEEN 1 AND 10`
+        ),
 
-    controlRange: check("control_range",
-        sql`${table.control} BETWEEN 1 AND 10`
-    ),
-    selfEfficacyRange: check("self_efficacy_range",
-        sql`${table.selfEfficacy} BETWEEN 1 AND 10 `
-    )
-}))
+        controlRange: check("control_range",
+            sql`${table.control} BETWEEN 1 AND 10`
+        ),
+        selfEfficacyRange: check("self_efficacy_range",
+            sql`${table.selfEfficacy} BETWEEN 1 AND 10 `
+        )
+    }))
 
 export const riskScoreTable = pgTable("risk-Scores", {
     scoreId: serial("riskScore").primaryKey(),
@@ -95,7 +96,7 @@ export const messagesTable = pgTable("chats", {
 
 //Relations
 //userRelations
-export const userRelations = relations(userTable, ({ many}) => ({
+export const userRelations = relations(userTable, ({ many }) => ({
     checkins: many(checkinTable),
     riskScores: many(riskScoreTable),
     supportPartners: many(supportpartnersTable),
@@ -104,23 +105,23 @@ export const userRelations = relations(userTable, ({ many}) => ({
 }));
 
 //CheckinRelations
-export const checkInRelations = relations(checkinTable, ({one}) =>({
-    user: one(userTable,{
+export const checkInRelations = relations(checkinTable, ({ one }) => ({
+    user: one(userTable, {
         fields: [checkinTable.userId],
         references: [userTable.userId],
     }),
 }));
 
 //RiskScoreRelations
-export const riskscoreRelations = relations(riskScoreTable, ({one }) => ({
+export const riskscoreRelations = relations(riskScoreTable, ({ one }) => ({
     user: one(userTable, {
         fields: [riskScoreTable.userId],
         references: [userTable.userId],
     }),
-}) );
+}));
 
 //SupportPartnerRelations
-export const supportPartnerRelations = relations(supportpartnersTable, ({one, many}) => ({
+export const supportPartnerRelations = relations(supportpartnersTable, ({ one, many }) => ({
     user: one(userTable, {
         fields: [supportpartnersTable.userId],
         references: [userTable.userId],
@@ -129,7 +130,7 @@ export const supportPartnerRelations = relations(supportpartnersTable, ({one, ma
 }));
 
 //SupportPartnerActionsRelations
-export const supportPartnerActionsRelations = relations(supportPartnersActionsTable, ({one}) => ({
+export const supportPartnerActionsRelations = relations(supportPartnersActionsTable, ({ one }) => ({
     user: one(userTable, {
         fields: [supportPartnersActionsTable.userId],
         references: [userTable.userId],
@@ -141,12 +142,12 @@ export const supportPartnerActionsRelations = relations(supportPartnersActionsTa
 }));
 
 //chatRoomRelations
-export const chatRoomRelations = relations(chatRoomTable, ({many}) => ({
+export const chatRoomRelations = relations(chatRoomTable, ({ many }) => ({
     messages: many(messagesTable),
 }));
 
 //message relations
-export const messagesRelations = relations(messagesTable, ({one}) => ({
+export const messagesRelations = relations(messagesTable, ({ one }) => ({
     user: one(userTable, {
         fields: [messagesTable.userId],
         references: [userTable.userId],

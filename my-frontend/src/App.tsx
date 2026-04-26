@@ -5,7 +5,12 @@ import { adminRoutes } from './routes/AdminRoutes';
 import { patientRoutes } from './routes/patientRoutes';
 import { supportPartnerRoutes } from './routes/supportpartnerRoutes';
 
+
 // Public Pages
+import { Services } from './pages/OurMission';
+import { Locations } from './pages/Location';
+import  Testimonials  from './pages/Testimonials';
+import  Support  from './pages/Support';
 import Login from './pages/Login';
 import Signin from './pages/Signin';
 import { Home } from './pages/Home';
@@ -15,6 +20,22 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Home />,
+  },
+  {
+    path: "/services",
+    element: <Services />,
+  },
+  {
+    path: "/location",
+    element: <Locations />,
+  },
+  {
+    path: "/contact",
+    element: <Support />,
+  },
+  {
+    path: "/testimonials",
+    element: <Testimonials />,
   },
   {
     path: "/login",

@@ -1,22 +1,35 @@
 import { Request, Response, NextFunction } from "express";
-import { 
-    createSupportPartnerActionsService, 
-    getSupportPartnerActionsByIdService, 
-    getSupportPartnerActionsServices, 
-    updateSupportPartnerActionsServices, 
-    deleteSupportPartnerActionsServices 
+import {
+    createSupportPartnerActionsService,
+    getSupportPartnerActionsByIdService,
+    getSupportPartnerActionsServices,
+    updateSupportPartnerActionsServices,
+    deleteSupportPartnerActionsServices
 } from "./supportpartneractions.service";
 
 /**
  * GET /partner-actions
- * Fetch all logged actions (Admin utility)
+ * Fixed: Now dynamically filters based on the logged-in user's role
  */
 export const getActionsController = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // @ts-ignore - Assuming bearAuth attaches user info to req.user
+        const { userId, role } = req.user;
+
         const allActions = await getSupportPartnerActionsServices();
+
         if (!allActions || allActions.length === 0) {
-            return res.status(404).json({ error: "No actions found" });
+            return res.status(200).json([]); // Return empty array instead of 404 to avoid frontend crashes
         }
+
+        // ROLE-BASED FILTERING:
+        // If the user is a patient, only show actions where they are the recipient (userId)
+        if (role === 'patient') {
+            const patientActions = allActions.filter(action => action.userId === userId);
+            return res.status(200).json(patientActions);
+        }
+
+        // If Admin or Support Partner, return all actions
         return res.status(200).json(allActions);
     } catch (error: any) {
         next(error);
@@ -34,6 +47,14 @@ export const getActionsByIdController = async (req: Request, res: Response, next
 
     try {
         const action = await getSupportPartnerActionsByIdService(actionId);
+
+        // Security Check: Ensure a patient isn't trying to peek at another patient's intervention
+        // @ts-ignore
+        const { userId, role } = req.user;
+        if (role === 'patient' && action && action.userId !== userId) {
+            return res.status(403).json({ error: "Unauthorized access to this action" });
+        }
+
         if (!action) {
             return res.status(404).json({ message: "Action not found or doesn't exist" });
         }
@@ -45,7 +66,6 @@ export const getActionsByIdController = async (req: Request, res: Response, next
 
 /**
  * POST /partner-actions
- * Log a new action taken by a Support Partner
  */
 export const createActionsController = async (req: Request, res: Response, next: NextFunction) => {
     const { partnerId, userId, success, actionDescription } = req.body;
@@ -58,10 +78,6 @@ export const createActionsController = async (req: Request, res: Response, next:
         const newAction = await createSupportPartnerActionsService({
             partnerId, userId, success, actionDescription
         });
-
-        if (!newAction) {
-            return res.status(500).json({ error: "Failed to log action" });
-        }
 
         return res.status(201).json({
             message: "Action logged successfully ✅",
@@ -77,21 +93,9 @@ export const createActionsController = async (req: Request, res: Response, next:
  */
 export const updateActionsController = async (req: Request, res: Response, next: NextFunction) => {
     const actionId = parseInt(req.params.id as string);
-    if (isNaN(actionId)) {
-        return res.status(400).json({ error: "Invalid action Id" });
-    }
-
     const { partnerId, userId, success, actionDescription } = req.body;
-    if (!partnerId || !userId || success === undefined || !actionDescription) {
-        return res.status(400).json({ error: "All fields required" });
-    }
 
     try {
-        const existingAction = await getSupportPartnerActionsByIdService(actionId);
-        if (!existingAction) {
-            return res.status(404).json({ message: "Action not found" });
-        }
-
         const updatedAction = await updateSupportPartnerActionsServices(actionId, {
             partnerId, userId, success, actionDescription
         });
@@ -114,16 +118,7 @@ export const updateActionsController = async (req: Request, res: Response, next:
  */
 export const deleteActionsController = async (req: Request, res: Response, next: NextFunction) => {
     const actionId = parseInt(req.params.id as string);
-    if (isNaN(actionId)) {
-        return res.status(400).json({ error: "Invalid action Id" });
-    }
-
     try {
-        const existingAction = await getSupportPartnerActionsByIdService(actionId);
-        if (!existingAction) {
-            return res.status(404).json({ message: "Action not found" });
-        }
-
         await deleteSupportPartnerActionsServices(actionId);
         return res.status(200).json({ message: "Action deleted successfully" });
     } catch (error: any) {
