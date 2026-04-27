@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { 
-    getChatRoomsController, 
-    getChatRoomsByIdController, 
-    createChatRoomsController, 
-    deleteChatRoomsController, 
-    updateChatRoomsController 
+import {
+    getChatRoomsController,
+    getChatRoomsByIdController,
+    createChatRoomsController,
+    deleteChatRoomsController,
+    updateChatRoomsController
 } from "./chatroom.controller";
 // Standardized import name to supportPartnerRoleAuth to match bearAuth.ts
-import { 
-    adminRoleAuth, 
-    patientRoleAuth, 
-    supportPartnerRoleAuth, 
-    allRoleAuth 
+import {
+    adminRoleAuth,
+    patientRoleAuth,
+    supportPartnerRoleAuth,
+    allRoleAuth
 } from "../middleware/bearAuth";
 
 export const ChatRoomsRouter = Router();
@@ -30,9 +30,9 @@ ChatRoomsRouter.get('/chatroom/:id', allRoleAuth, getChatRoomsByIdController);
 
 /**
  * POST /chatroom
- * Access: Admin only (Admins typically initialize rooms for recovery pairs)
+ * Access: allRoleAuth (Allow patients and partners to create rooms dynamically)
  */
-ChatRoomsRouter.post('/chatroom', adminRoleAuth, createChatRoomsController);
+ChatRoomsRouter.post('/chatroom', allRoleAuth, createChatRoomsController);
 
 /**
  * PUT /chatroom/:id

@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { 
-    createMessageService, 
-    updateMessageServices, 
-    getMessageByIdService, 
-    getMessageServices, 
-    deleteMessageServices 
+import {
+    createMessageService,
+    updateMessageServices,
+    getMessageByIdService,
+    getMessageServices,
+    deleteMessageServices
 } from "./messages.service";
 
 /**
@@ -46,10 +46,10 @@ export const getMessagesByIdController = async (req: Request, res: Response, nex
  */
 export const createMessagesController = async (req: Request, res: Response, next: NextFunction) => {
     const { roomId, message } = req.body;
-    
+
     // Extracted from auth middleware (bearAuth)
-    const userId = (req as any).user?.userId; 
-    const sender = (req as any).user?.role;
+    const userId = (req as any).user?.userId;
+    const sender = (req as any).user?.userType;
 
     if (!roomId || !message || !userId || !sender) {
         return res.status(400).json({ error: "Room ID and message text are required" });
@@ -81,8 +81,8 @@ export const updateMessagesController = async (req: Request, res: Response, next
         return res.status(400).json({ error: "Invalid message Id" });
     }
 
-    const authUserId = (req as any).user?.userId; 
-    const authRole = (req as any).user?.role;
+    const authUserId = (req as any).user?.userId;
+    const authRole = (req as any).user?.userType;
     const { message } = req.body;
 
     if (!message) {
@@ -91,7 +91,7 @@ export const updateMessagesController = async (req: Request, res: Response, next
 
     try {
         const existingMessage = await getMessageByIdService(messageId);
-        
+
         if (!existingMessage) {
             return res.status(404).json({ message: "Message not found" });
         }
@@ -102,7 +102,7 @@ export const updateMessagesController = async (req: Request, res: Response, next
         }
 
         const updatedMessage = await updateMessageServices(messageId, { message });
-        
+
         if (!updatedMessage) {
             return res.status(404).json({ message: "Failed to update message" });
         }
@@ -121,8 +121,8 @@ export const deleteMessagesController = async (req: Request, res: Response, next
         return res.status(400).json({ message: "Invalid Message Id" });
     }
 
-    const authUserId = (req as any).user?.userId; 
-    const authRole = (req as any).user?.role;
+    const authUserId = (req as any).user?.userId;
+    const authRole = (req as any).user?.userType;
 
     try {
         const existingMessage = await getMessageByIdService(messageId);

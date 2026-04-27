@@ -28,7 +28,7 @@ export const NavbarH = () => {
       case "support_partner":
         return "/partner";
       case "patient":
-        return "/patient/dashboard";
+        return "/patient";
       default:
         return "/";
     }

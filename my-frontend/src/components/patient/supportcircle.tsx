@@ -1,19 +1,29 @@
-import { useSelector } from 'react-redux';
-import { 
-  HeartHandshake, 
-  Phone, 
-  ShieldAlert, 
-  CheckCircle2, 
-  MessageCircle, 
+import { useSelector } from "react-redux";
+import { useState } from "react";
+import {
+  HeartHandshake,
+  Phone,
+  ShieldAlert,
+  CheckCircle2,
+  MessageCircle,
   ArrowRight,
-  Loader2 
-} from 'lucide-react';
-import { type RootState } from '../../app/types';
-import { Button } from '../ui/button';
+  Loader2,
+  Send,
+  X,
+} from "lucide-react";
+import { type RootState } from "../../app/types";
+import { Button } from "../ui/button";
+import { toast } from "react-hot-toast";
 
 // API Hooks
-import { useGetSupportPartnerByIdQuery } from '../../features/api/partnerApi';
-import { useGetActionsQuery, useCreateActionMutation, useUpdateActionMutation } from '../../features/api/actionsApi';
+import { useGetSupportPartnerByIdQuery } from "../../features/api/partnerApi";
+import {
+  useGetActionsQuery,
+  useCreateActionMutation,
+  useUpdateActionMutation,
+} from "../../features/api/actionsApi";
+import { useCreateMessageMutation } from "../../features/api/messagesApi";
+import { useCreateChatRoomMutation } from "../../features/api/chatroomApi";
 
 const SupportCircle = () => {
   // 1. Auth Context
@@ -21,9 +31,10 @@ const SupportCircle = () => {
   const userId = user?.userId;
 
   // 2. Fetch Partner Data (Relationship, Name, Phone)
-  const { data: partner, isLoading: partnerLoading } = useGetSupportPartnerByIdQuery(userId as number, { 
-    skip: !userId 
-  });
+  const { data: partner, isLoading: partnerLoading } =
+    useGetSupportPartnerByIdQuery(userId as number, {
+      skip: !userId,
+    });
 
   // 3. Fetch Action Plan (Current tasks for the patient)
   const { data: actions, isLoading: actionsLoading } = useGetActionsQuery();
@@ -31,6 +42,13 @@ const SupportCircle = () => {
   // 4. Mutations for User Interaction
   const [triggerSOS, { isLoading: isSendingSOS }] = useCreateActionMutation();
   const [completeAction] = useUpdateActionMutation();
+  const [createMessage, { isLoading: isSendingMessage }] =
+    useCreateMessageMutation();
+  const [createChatRoom, { isLoading: isCreatingRoom }] = useCreateChatRoomMutation();
+
+  // 5. State for Message Modal
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState("");
 
   // Handle Emergency Signal
   const handleSOS = async () => {
@@ -39,8 +57,9 @@ const SupportCircle = () => {
       await triggerSOS({
         userId,
         partnerId: partner.partnerId,
-        success: false, 
-        actionDescription: "EMERGENCY: SOS Signal activated from Support Circle"
+        success: false,
+        actionDescription:
+          "EMERGENCY: SOS Signal activated from Support Circle",
       }).unwrap();
       alert("SOS Signal Sent. Your partner has been notified.");
     } catch (err) {
@@ -57,12 +76,54 @@ const SupportCircle = () => {
     }
   };
 
+  // Handle Message Sending
+  const handleSendMessage = async () => {
+    if (!messageText.trim()) {
+      toast.error("Please enter a message");
+      return;
+    }
+
+    if (!partner) {
+      toast.error("No support partner found");
+      return;
+    }
+
+    if (!userId) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    try {
+      // 1. Create a chat room dynamically for this patient-partner pair
+      const roomDescription = `Patient ${userId} - Partner ${partner.partnerId} Chat Room`;
+      const chatRoomResponse = await createChatRoom({
+        isPersistent: true,
+        description: roomDescription,
+      }).unwrap();
+
+      // 2. Send message to the created room
+      await createMessage({
+        roomId: chatRoomResponse.roomId,
+        message: messageText.trim(),
+      }).unwrap();
+
+      toast.success(`Message sent to ${partner.partnerName}!`);
+      setMessageText("");
+      setIsMessageModalOpen(false);
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      toast.error("Failed to send message. Please try again.");
+    }
+  };
+
   if (partnerLoading || actionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
-          <p className="font-black uppercase tracking-widest text-gray-400">Loading Support Circle...</p>
+          <p className="font-black uppercase tracking-widest text-gray-400">
+            Loading Support Circle...
+          </p>
         </div>
       </div>
     );
@@ -71,7 +132,6 @@ const SupportCircle = () => {
   return (
     <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto space-y-8">
-        
         {/* Header: Support Partner Details */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 md:p-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
@@ -80,13 +140,16 @@ const SupportCircle = () => {
                 <HeartHandshake size={40} />
               </div>
               <div className="text-center md:text-left">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">Your Support Partner</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">
+                  Your Support Partner
+                </p>
                 <h1 className="text-3xl font-black text-gray-900 tracking-tighter">
                   {partner?.partnerName || "No Partner Assigned"}
                 </h1>
                 <div className="flex items-center gap-4 mt-3 justify-center md:justify-start">
                   <span className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
-                    <Phone size={14} className="text-emerald-500" /> {partner?.contactInfo || "--- --- ---"}
+                    <Phone size={14} className="text-emerald-500" />{" "}
+                    {partner?.contactInfo || "--- --- ---"}
                   </span>
                   <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase">
                     {partner?.relationship || "Primary Support"}
@@ -94,9 +157,12 @@ const SupportCircle = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex gap-3 w-full md:w-auto">
-              <Button className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-14 px-8 font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-emerald-100">
+              <Button
+                onClick={() => setIsMessageModalOpen(true)}
+                className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-14 px-8 font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-emerald-100"
+              >
                 <MessageCircle size={18} className="mr-2" /> Message
               </Button>
             </div>
@@ -104,20 +170,23 @@ const SupportCircle = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           {/* Main Action Plan Column */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between px-2">
-              <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">Assigned Action Plan</h3>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Updates</span>
+              <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">
+                Assigned Action Plan
+              </h3>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Live Updates
+              </span>
             </div>
 
             <div className="space-y-4">
               {actions && actions.length > 0 ? (
                 actions.map((action) => (
-                  <ActionCard 
+                  <ActionCard
                     key={action.actionId}
-                    title={action.actionDescription} 
+                    title={action.actionDescription}
                     time={new Date(action.createdAt!).toLocaleDateString()}
                     isCompleted={action.success}
                     onResolve={() => handleResolveAction(action.actionId)}
@@ -132,56 +201,125 @@ const SupportCircle = () => {
           </div>
 
           {/* Emergency / SOS Sidebar */}
-          <div className="space-y-6">
-             <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden group">
-                <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all"></div>
-                <ShieldAlert className="text-red-500 mb-4" size={32} />
-                <h3 className="text-xl font-black uppercase tracking-tight mb-2">SOS Intervention</h3>
-                <p className="text-gray-400 text-xs font-medium leading-relaxed mb-6">
-                  Feeling overwhelmed? Click below to notify {partner?.partnerName || 'your partner'} immediately.
-                </p>
-                <Button 
-                  onClick={handleSOS}
-                  disabled={isSendingSOS}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-900/20 disabled:bg-gray-800"
-                >
-                  {isSendingSOS ? "Signaling..." : "Signal for Help"}
-                </Button>
-             </div>
+          {/* <div className="space-y-6">
+            <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden group">
+              <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-all"></div>
+              <ShieldAlert className="text-red-500 mb-4" size={32} />
+              <h3 className="text-xl font-black uppercase tracking-tight mb-2">
+                SOS Intervention
+              </h3>
+              <p className="text-gray-400 text-xs font-medium leading-relaxed mb-6">
+                Feeling overwhelmed? Click below to notify{" "}
+                {partner?.partnerName || "your partner"} immediately.
+              </p>
+              <Button
+                onClick={handleSOS}
+                disabled={isSendingSOS}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-900/20 disabled:bg-gray-800"
+              >
+                {isSendingSOS ? "Signaling..." : "Signal for Help"}
+              </Button>
+            </div>
 
-             <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Quick Resources</h4>
-                <div className="space-y-3">
-                   <ResourceLink label="Breathing Exercises" />
-                   <ResourceLink label="Cravings Log" />
-                   <ResourceLink label="Community Chat" />
-                </div>
-             </div>
-          </div>
-
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+                Quick Resources
+              </h4>
+              <div className="space-y-3">
+                <ResourceLink label="Breathing Exercises" />
+                <ResourceLink label="Cravings Log" />
+                <ResourceLink label="Community Chat" />
+              </div>
+            </div>
+          </div> */}
         </div>
       </div>
+
+      {/* Message Modal */}
+      {isMessageModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-gray-900">
+                Message {partner?.partnerName}
+              </h2>
+              <button
+                onClick={() => {
+                  setIsMessageModalOpen(false);
+                  setMessageText("");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+
+            {/* Message Input */}
+            <div className="mb-6">
+              <textarea
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Type your message here..."
+                className="w-full p-4 border-2 border-gray-200 rounded-2xl focus:border-emerald-500 focus:outline-none resize-none min-h-[120px] font-medium text-gray-900"
+              />
+              <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">
+                {messageText.length} characters
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setIsMessageModalOpen(false);
+                  setMessageText("");
+                }}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl h-12 font-black uppercase text-xs tracking-widest transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                disabled={isSendingMessage || isCreatingRoom || !messageText.trim()}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-12 font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-emerald-100 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Send size={16} />
+                {isSendingMessage || isCreatingRoom ? "Sending..." : "Send"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Internal Sub-components
 const ActionCard = ({ title, time, isCompleted, onResolve }: any) => (
-  <div className={`p-6 rounded-[2rem] border transition-all ${isCompleted ? 'bg-emerald-50/30 border-emerald-100 opacity-60' : 'bg-white border-gray-100 hover:shadow-md'}`}>
+  <div
+    className={`p-6 rounded-[2rem] border transition-all ${isCompleted ? "bg-emerald-50/30 border-emerald-100 opacity-60" : "bg-white border-gray-100 hover:shadow-md"}`}
+  >
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-4">
-        <div className={`mt-1 ${isCompleted ? 'text-emerald-500' : 'text-gray-300'}`}>
+        <div
+          className={`mt-1 ${isCompleted ? "text-emerald-500" : "text-gray-300"}`}
+        >
           <CheckCircle2 size={24} />
         </div>
         <div>
-          <h4 className={`font-black text-lg ${isCompleted ? 'text-emerald-900 line-through' : 'text-gray-900'}`}>{title}</h4>
+          <h4
+            className={`font-black text-lg ${isCompleted ? "text-emerald-900 line-through" : "text-gray-900"}`}
+          >
+            {title}
+          </h4>
           <div className="mt-3 inline-block px-3 py-1 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-black text-gray-400 uppercase">
             {time}
           </div>
         </div>
       </div>
       {!isCompleted && (
-        <button 
+        <button
           onClick={onResolve}
           className="p-2 bg-gray-50 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
         >
@@ -194,8 +332,13 @@ const ActionCard = ({ title, time, isCompleted, onResolve }: any) => (
 
 const ResourceLink = ({ label }: { label: string }) => (
   <button className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-emerald-50 rounded-2xl group transition-all">
-    <span className="text-xs font-bold text-gray-600 group-hover:text-emerald-700">{label}</span>
-    <ArrowRight size={14} className="text-gray-300 group-hover:text-emerald-500" />
+    <span className="text-xs font-bold text-gray-600 group-hover:text-emerald-700">
+      {label}
+    </span>
+    <ArrowRight
+      size={14}
+      className="text-gray-300 group-hover:text-emerald-500"
+    />
   </button>
 );
 
