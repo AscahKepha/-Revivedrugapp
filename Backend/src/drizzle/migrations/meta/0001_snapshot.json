@@ -1,0 +1,571 @@
+{
+  "id": "c41bde03-a942-4bbc-bc1e-13cbea233c31",
+  "prevId": "106269e0-b958-4e81-bb1d-647369b1d9d6",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.chatRoom": {
+      "name": "chatRoom",
+      "schema": "",
+      "columns": {
+        "roomId": {
+          "name": "roomId",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "isPersistent": {
+          "name": "isPersistent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.daily-checkins": {
+      "name": "daily-checkins",
+      "schema": "",
+      "columns": {
+        "checkinId": {
+          "name": "checkinId",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "checkinAt": {
+          "name": "checkinAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "cravings": {
+          "name": "cravings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "control": {
+          "name": "control",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "self_efficacy": {
+          "name": "self_efficacy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consequences": {
+          "name": "consequences",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "coping_used": {
+          "name": "coping_used",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "daily-checkins_userId_users_userid_fk": {
+          "name": "daily-checkins_userId_users_userid_fk",
+          "tableFrom": "daily-checkins",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "craving_range": {
+          "name": "craving_range",
+          "value": "\"daily-checkins\".\"cravings\" BETWEEN 1 AND 10"
+        },
+        "control_range": {
+          "name": "control_range",
+          "value": "\"daily-checkins\".\"control\" BETWEEN 1 AND 10"
+        },
+        "self_efficacy_range": {
+          "name": "self_efficacy_range",
+          "value": "\"daily-checkins\".\"self_efficacy\" BETWEEN 1 AND 10"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.chats": {
+      "name": "chats",
+      "schema": "",
+      "columns": {
+        "chatsId": {
+          "name": "chatsId",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "roomId": {
+          "name": "roomId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sender": {
+          "name": "sender",
+          "type": "role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "chats_roomId_chatRoom_roomId_fk": {
+          "name": "chats_roomId_chatRoom_roomId_fk",
+          "tableFrom": "chats",
+          "tableTo": "chatRoom",
+          "columnsFrom": [
+            "roomId"
+          ],
+          "columnsTo": [
+            "roomId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "chats_userId_users_userid_fk": {
+          "name": "chats_userId_users_userid_fk",
+          "tableFrom": "chats",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.risk-Scores": {
+      "name": "risk-Scores",
+      "schema": "",
+      "columns": {
+        "riskScore": {
+          "name": "riskScore",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "name": "score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "riskLevel": {
+          "name": "riskLevel",
+          "type": "risk_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'low'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "risk-Scores_userId_users_userid_fk": {
+          "name": "risk-Scores_userId_users_userid_fk",
+          "tableFrom": "risk-Scores",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.support-partners-actions": {
+      "name": "support-partners-actions",
+      "schema": "",
+      "columns": {
+        "actionId": {
+          "name": "actionId",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "partnerId": {
+          "name": "partnerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "success": {
+          "name": "success",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actionDescription": {
+          "name": "actionDescription",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "support-partners-actions_partnerId_support-partners_partnerId_fk": {
+          "name": "support-partners-actions_partnerId_support-partners_partnerId_fk",
+          "tableFrom": "support-partners-actions",
+          "tableTo": "support-partners",
+          "columnsFrom": [
+            "partnerId"
+          ],
+          "columnsTo": [
+            "partnerId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "support-partners-actions_userId_users_userid_fk": {
+          "name": "support-partners-actions_userId_users_userid_fk",
+          "tableFrom": "support-partners-actions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.support-partners": {
+      "name": "support-partners",
+      "schema": "",
+      "columns": {
+        "partnerId": {
+          "name": "partnerId",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user": {
+          "name": "user",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partnerName": {
+          "name": "partnerName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contactInfo": {
+          "name": "contactInfo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relationship": {
+          "name": "relationship",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "userid": {
+          "name": "userid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_phone": {
+          "name": "contact_phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "streak_days": {
+          "name": "streak_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "longest_streak": {
+          "name": "longest_streak",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "usertype": {
+          "name": "usertype",
+          "type": "role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'patient'"
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_partner_id_support-partners_partnerId_fk": {
+          "name": "users_partner_id_support-partners_partnerId_fk",
+          "tableFrom": "users",
+          "tableTo": "support-partners",
+          "columnsFrom": [
+            "partner_id"
+          ],
+          "columnsTo": [
+            "partnerId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.risk_level": {
+      "name": "risk_level",
+      "schema": "public",
+      "values": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "public.role": {
+      "name": "role",
+      "schema": "public",
+      "values": [
+        "patient",
+        "support_partner",
+        "admin"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

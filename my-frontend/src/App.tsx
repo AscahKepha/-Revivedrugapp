@@ -1,16 +1,15 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 
 // Route Modules
-import { adminRoutes } from './routes/AdminRoutes';
 import { patientRoutes } from './routes/patientRoutes';
-import { supportPartnerRoutes } from './routes/supportpartnerRoutes';
-
+// Consolidated imports from your shared Admin/Partner route file
+import { supportPartnerRoutes, adminRoutes } from './routes/AdminPartnerRoutes';
 
 // Public Pages
 import { Services } from './pages/OurMission';
 import { Locations } from './pages/Location';
-import  Testimonials  from './pages/Testimonials';
-import  Support  from './pages/Support';
+import Testimonials from './pages/Testimonials';
+import Support from './pages/Support';
 import Login from './pages/Login';
 import Signin from './pages/Signin';
 import { Home } from './pages/Home';
@@ -59,7 +58,11 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <div className="antialiased">
+      <RouterProvider router={router} />
+    </div>
+  );
 }
 
 export default App;

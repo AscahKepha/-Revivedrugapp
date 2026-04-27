@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  ClipboardCheck, 
-  BarChart3, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardCheck,
+  BarChart3,
+  Menu,
   HeartPulse,
 } from 'lucide-react';
 
 import { NavbarH } from '../components/Home/Navbarhome';
 import Logout from '../components/Logout';
-import Footerp from '../components/patientdashboard/footerp';
+import Footerp from '../components/patient/footerp';
 
 const navItems = [
   { to: '/patient/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -28,14 +28,14 @@ const PatientLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden font-sans">
-      
+
       {/* 1. Persistent Home Navbar at the very top */}
       <NavbarH />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-slate-900/40 z-40 md:hidden backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
@@ -48,7 +48,7 @@ const PatientLayout: React.FC = () => {
           md:relative md:translate-x-0
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
-          
+
           {/* Branding Section */}
           <div className="p-8">
             <Link to="/patient/dashboard" className="flex items-center gap-3 group">
@@ -80,10 +80,9 @@ const PatientLayout: React.FC = () => {
                       to={item.to}
                       onClick={() => setSidebarOpen(false)}
                       className={({ isActive }) =>
-                        `flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-[11px] font-black uppercase tracking-widest ${
-                          isActive
-                            ? 'text-emerald-600 bg-emerald-50 border border-emerald-100 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                        `flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-[11px] font-black uppercase tracking-widest ${isActive
+                          ? 'text-emerald-600 bg-emerald-50 border border-emerald-100 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                         }`
                       }
                     >
@@ -100,16 +99,16 @@ const PatientLayout: React.FC = () => {
 
           {/* Sidebar Footer / Logout */}
           <div className="p-6 mt-auto border-t border-slate-100 bg-slate-50/50">
-            <Logout 
-              variant="ghost" 
-              className="w-full justify-start px-5 py-4 h-auto rounded-2xl font-black uppercase text-[11px] tracking-widest text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" 
+            <Logout
+              variant="ghost"
+              className="w-full justify-start px-5 py-4 h-auto rounded-2xl font-black uppercase text-[11px] tracking-widest text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
             />
           </div>
         </aside>
 
         {/* 3. Main Content Wrapper */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          
+
           {/* Mobile Navbar Header (Hidden on Desktop) */}
           <header className="md:hidden flex items-center justify-between p-5 bg-white border-b border-slate-200 z-30 shadow-sm">
             <div className="flex items-center gap-2">
@@ -118,7 +117,7 @@ const PatientLayout: React.FC = () => {
               </div>
               <span className="font-black text-sm uppercase tracking-tighter italic text-slate-900">RevivePro</span>
             </div>
-            <button 
+            <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
             >
@@ -132,7 +131,7 @@ const PatientLayout: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 md:px-10 py-10 min-h-[calc(100vh-12rem)]">
               <Outlet />
             </div>
-            
+
             {/* Footer Integration */}
             <div className="px-4 md:px-10 pb-10">
               <Footerp />

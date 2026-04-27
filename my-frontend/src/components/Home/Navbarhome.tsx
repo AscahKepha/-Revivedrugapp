@@ -24,7 +24,7 @@ export const NavbarH = () => {
   const getDashboardBase = () => {
     switch (userType) {
       case "admin":
-        return "/admindashboard";
+        return "/admin";
       case "support_partner":
         return "/partner";
       case "patient":

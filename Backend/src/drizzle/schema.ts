@@ -1,17 +1,27 @@
-import { pgTable, serial, text, varchar, timestamp, integer, date, time, boolean, pgEnum, check } from "drizzle-orm/pg-core";
-
+import { pgTable, serial, text, varchar, timestamp, integer, boolean, pgEnum, check, AnyPgColumn } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { use } from "react";
 
-
-//Enums
+// --- Enums ---
 export const roleEnum = pgEnum("role", ["patient", "support_partner", "admin"]);
 export const riskLevelEnum = pgEnum("risk_level", ["low", "medium", "high"]);
 
+// --- Tables ---
 
-// Fixed Schema
+// 1. Define supportpartnersTable first so userTable can reference it
+export const supportpartnersTable = pgTable("support-partners", {
+    partnerId: serial("partnerId").primaryKey(),
+    // We use a helper to avoid circularity issues if needed, 
+    // but reordering usually solves it.
+    userId: integer("user"),
+    partnerName: text("partnerName").notNull(),
+    contactInfo: text("contactInfo").notNull(),
+    relationship: text("relationship").notNull(),
+    createdAt: timestamp("createdAt").defaultNow(),
+    updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+// 2. Define userTable
 export const userTable = pgTable("users", {
-    // The first argument is the DB column name. Keep these lowercase!
     userId: serial("userid").primaryKey(),
     userName: text("username").notNull(),
     email: varchar("email").unique(),
@@ -19,12 +29,14 @@ export const userTable = pgTable("users", {
     contactPhone: varchar("contact_phone", { length: 20 }).notNull(),
     streak_days: integer("streak_days").default(0),
     longest_streak: integer("longest_streak").default(0),
+    partnerId: integer("partner_id").references(() => supportpartnersTable.partnerId),
     address: text("address"),
-    userType: roleEnum("usertype").default("patient"), // Changed "userType" to "usertype"
-    createdAt: timestamp("createdat").defaultNow(),     // Changed "createdAt" to "createdat"
-    updatedAt: timestamp("updatedat").defaultNow(),     // Changed "updatedAt" to "updatedat"
+    userType: roleEnum("usertype").default("patient"),
+    createdAt: timestamp("createdat").defaultNow(),
+    updatedAt: timestamp("updatedat").defaultNow(),
 });
 
+// 3. Define other tables
 export const checkinTable = pgTable("daily-checkins", {
     checkinId: serial("checkinId").primaryKey(),
     userId: integer("userId").references(() => userTable.userId),
@@ -37,19 +49,11 @@ export const checkinTable = pgTable("daily-checkins", {
     notes: text("notes"),
     createdAt: timestamp("createdAt").defaultNow(),
     updatedAt: timestamp("updatedAt").defaultNow(),
-},
-    (table) => ({
-        cravingRange: check("craving_range",
-            sql`${table.cravings} BETWEEN 1 AND 10`
-        ),
-
-        controlRange: check("control_range",
-            sql`${table.control} BETWEEN 1 AND 10`
-        ),
-        selfEfficacyRange: check("self_efficacy_range",
-            sql`${table.selfEfficacy} BETWEEN 1 AND 10 `
-        )
-    }))
+}, (table) => ({
+    cravingRange: check("craving_range", sql`${table.cravings} BETWEEN 1 AND 10`),
+    controlRange: check("control_range", sql`${table.control} BETWEEN 1 AND 10`),
+    selfEfficacyRange: check("self_efficacy_range", sql`${table.selfEfficacy} BETWEEN 1 AND 10`),
+}));
 
 export const riskScoreTable = pgTable("risk-Scores", {
     scoreId: serial("riskScore").primaryKey(),
@@ -57,33 +61,23 @@ export const riskScoreTable = pgTable("risk-Scores", {
     score: integer("score").notNull(),
     riskLevel: riskLevelEnum("riskLevel").default("low"),
     createdAt: timestamp("createdAt").defaultNow()
-})
+});
 
-export const supportpartnersTable = pgTable("support-partners", {
-    partnerId: serial("partnerId").primaryKey(),
-    userId: integer("user").references(() => userTable.userId),
-    partnerName: text("partnerName").notNull(),
-    contactInfo: text("contactInfo").notNull(),
-    relationship: text("relationship").notNull(),
-    createdAt: timestamp("createdAt").defaultNow(),
-    updatedAt: timestamp("updatedAt").defaultNow(),
-})
-
-export const supportPartnersActionsTable = pgTable("support-partners-actions", ({
+export const supportPartnersActionsTable = pgTable("support-partners-actions", {
     actionId: serial("actionId").primaryKey(),
     partnerId: integer("partnerId").references(() => supportpartnersTable.partnerId),
     userId: integer("userId").references(() => userTable.userId),
     success: boolean("success").notNull(),
     actionDescription: text("actionDescription").notNull(),
     createdAt: timestamp("createdAt").defaultNow(),
-}))
+});
 
 export const chatRoomTable = pgTable("chatRoom", {
     roomId: serial("roomId").primaryKey(),
     isPersistent: boolean("isPersistent").default(true),
     description: text("description"),
     createdAt: timestamp("createdAt").defaultNow(),
-})
+});
 
 export const messagesTable = pgTable("chats", {
     messagesId: serial("chatsId").primaryKey(),
@@ -92,35 +86,22 @@ export const messagesTable = pgTable("chats", {
     message: text("message").notNull(),
     sender: roleEnum("sender").notNull(),
     createdAt: timestamp("createdAt").defaultNow(),
-})
+});
 
-//Relations
-//userRelations
-export const userRelations = relations(userTable, ({ many }) => ({
+// --- Relations (Handling the circular logic here is fine) ---
+
+export const userRelations = relations(userTable, ({ many, one }) => ({
     checkins: many(checkinTable),
     riskScores: many(riskScoreTable),
+    assignedPartner: one(supportpartnersTable, {
+        fields: [userTable.partnerId],
+        references: [supportpartnersTable.partnerId],
+    }),
     supportPartners: many(supportpartnersTable),
     supportPartnerActions: many(supportPartnersActionsTable),
     messages: many(messagesTable),
 }));
 
-//CheckinRelations
-export const checkInRelations = relations(checkinTable, ({ one }) => ({
-    user: one(userTable, {
-        fields: [checkinTable.userId],
-        references: [userTable.userId],
-    }),
-}));
-
-//RiskScoreRelations
-export const riskscoreRelations = relations(riskScoreTable, ({ one }) => ({
-    user: one(userTable, {
-        fields: [riskScoreTable.userId],
-        references: [userTable.userId],
-    }),
-}));
-
-//SupportPartnerRelations
 export const supportPartnerRelations = relations(supportpartnersTable, ({ one, many }) => ({
     user: one(userTable, {
         fields: [supportpartnersTable.userId],
@@ -129,53 +110,41 @@ export const supportPartnerRelations = relations(supportpartnersTable, ({ one, m
     actions: many(supportPartnersActionsTable),
 }));
 
-//SupportPartnerActionsRelations
-export const supportPartnerActionsRelations = relations(supportPartnersActionsTable, ({ one }) => ({
-    user: one(userTable, {
-        fields: [supportPartnersActionsTable.userId],
-        references: [userTable.userId],
-    }),
-    partner: one(supportpartnersTable, {
-        fields: [supportPartnersActionsTable.partnerId],
-        references: [supportpartnersTable.partnerId],
-    }),
+// (Other relations remain same as your previous version)
+export const checkInRelations = relations(checkinTable, ({ one }) => ({
+    user: one(userTable, { fields: [checkinTable.userId], references: [userTable.userId] }),
 }));
 
-//chatRoomRelations
+export const riskscoreRelations = relations(riskScoreTable, ({ one }) => ({
+    user: one(userTable, { fields: [riskScoreTable.userId], references: [userTable.userId] }),
+}));
+
+export const supportPartnerActionsRelations = relations(supportPartnersActionsTable, ({ one }) => ({
+    user: one(userTable, { fields: [supportPartnersActionsTable.userId], references: [userTable.userId] }),
+    partner: one(supportpartnersTable, { fields: [supportPartnersActionsTable.partnerId], references: [supportpartnersTable.partnerId] }),
+}));
+
 export const chatRoomRelations = relations(chatRoomTable, ({ many }) => ({
     messages: many(messagesTable),
 }));
 
-//message relations
 export const messagesRelations = relations(messagesTable, ({ one }) => ({
-    user: one(userTable, {
-        fields: [messagesTable.userId],
-        references: [userTable.userId],
-    }),
-    chatRoom: one(chatRoomTable, {
-        fields: [messagesTable.roomId],
-        references: [chatRoomTable.roomId],
-    }),
+    user: one(userTable, { fields: [messagesTable.userId], references: [userTable.userId] }),
+    chatRoom: one(chatRoomTable, { fields: [messagesTable.roomId], references: [chatRoomTable.roomId] }),
 }));
 
-//Types
+// --- Types ---
 export type TUserInsert = typeof userTable.$inferInsert;
 export type TUserSelect = typeof userTable.$inferSelect;
-
 export type TCheckinSelect = typeof checkinTable.$inferSelect;
 export type TCheckinInsert = typeof checkinTable.$inferInsert;
-
 export type TRiskScoreSelect = typeof riskScoreTable.$inferSelect;
 export type TRiskScoreInsert = typeof riskScoreTable.$inferInsert;
-
 export type TPartnerSelect = typeof supportpartnersTable.$inferSelect;
 export type TPartnerInsert = typeof supportpartnersTable.$inferInsert;
-
 export type TSupportPartnerActionsSelect = typeof supportPartnersActionsTable.$inferSelect;
 export type TSupportPartnerActionsInsert = typeof supportPartnersActionsTable.$inferInsert;
-
 export type TChatRoomSelect = typeof chatRoomTable.$inferSelect;
 export type TChatRoomInsert = typeof chatRoomTable.$inferInsert;
-
 export type TMessageSelect = typeof messagesTable.$inferSelect;
 export type TMessageInsert = typeof messagesTable.$inferInsert;

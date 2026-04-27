@@ -1,41 +1,50 @@
 import { Router } from "express";
-import { 
-    getUsersController, 
-    getUserByIdController, 
-    createUserController, 
-    deleteUserController, 
+import {
+    getUsersController,
+    getUserByIdController,
+    createUserController,
+    deleteUserController,
     updateUserController,
     handleUserCheckIn
 } from "./user.controller";
 
-import { 
-    adminRoleAuth, 
-    allRoleAuth 
+import {
+    adminRoleAuth,
+    allRoleAuth
 } from "../middleware/bearAuth";
 
 export const userRouter = Router();
 
-// Retrieve all users - restricted to Admin
-userRouter.get('/users', adminRoleAuth, getUsersController);
+/**
+ * User Management Routes
+ * Access: allRoleAuth allows Admins, Partners, and Patients to view directories/profiles.
+ */
 
-// Get a specific user profile by ID - accessible by the user themselves or Admin
-userRouter.get('/users/:id', allRoleAuth, getUserByIdController);
+// URL: GET /api/users
+// Used by Support Partners to see the "All Patients" list
+userRouter.get('/', allRoleAuth, getUsersController);
 
-// Create a new user - restricted to Admin (standard registration usually goes through auth routes)
-userRouter.post('/users', adminRoleAuth, createUserController);
+// URL: GET /api/users/:id
+// Used by Support Partners to view a specific "Clinical Profile"
+userRouter.get('/:id', allRoleAuth, getUserByIdController);
 
-// Update user details - accessible by the user or Admin
-userRouter.put('/users/:id', allRoleAuth, updateUserController);
+// URL: POST /api/users
+// Restricted to Admin for account creation
+userRouter.post('/', adminRoleAuth, createUserController);
 
-// Delete a user - restricted to Admin
-userRouter.delete('/users/:id', adminRoleAuth, deleteUserController);
+// URL: PUT /api/users/:id
+// allRoleAuth: Allows users to update their own profiles or admins to manage them
+userRouter.put('/:id', allRoleAuth, updateUserController);
+
+// URL: DELETE /api/users/:id
+// Restricted to Admin only
+userRouter.delete('/:id', adminRoleAuth, deleteUserController);
 
 /**
  * Custom Actions
  */
 
-// Increment streak when a user completes a daily check-in
-// Usually accessible by patients or all authenticated roles
-userRouter.patch('/users/:id/checkin', allRoleAuth, handleUserCheckIn);
+// URL: PATCH /api/users/:id/checkin
+userRouter.patch('/:id/checkin', allRoleAuth, handleUserCheckIn);
 
 export default userRouter;

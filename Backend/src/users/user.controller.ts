@@ -1,63 +1,83 @@
 import { Request, Response, NextFunction } from "express";
-import { 
-    createUserService, 
-    updateUserService, 
-    getUserByIdService, 
-    getUserServices, 
-    deleteUserServices, 
-    incrementUserStreakSmart 
+import {
+    createUserService,
+    updateUserService,
+    getUserByIdService,
+    getUserServices,
+    deleteUserServices,
+    incrementUserStreakSmart
 } from "./user.service";
 
+/**
+ * getUsersController: Fetches users based on role permissions.
+ */
 export const getUsersController = async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Fetching all users...");
+    const requesterId = (req as any).user?.userId;
+    const requesterRole = (req as any).user?.userType;
+
     try {
-        const allusers = await getUserServices();
-        if (!allusers || allusers.length === 0) {
-            console.warn("No users found in database.");
-            return res.status(404).json({ messages: "No users found" });
+        let allusers;
+
+        if (requesterRole === 'admin') {
+            allusers = await getUserServices();
+        } else if (requesterRole === 'support_partner') {
+            allusers = await getUserServices(requesterId);
+        } else {
+            return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
         }
-        console.log(`Successfully retrieved ${allusers.length} users.`);
+
+        if (!allusers || allusers.length === 0) {
+            return res.status(200).json([]);
+        }
+
         res.status(200).json(allusers);
     } catch (error: any) {
         next(error);
     }
 };
 
+/**
+ * getUserByIdController: Fetches a single user by ID.
+ * Updated to allow: Admins, the User themselves, or their assigned Partner.
+ */
 export const getUserByIdController = async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const userId = parseInt(id as string);
-    
-    console.log(`Fetching user with ID: ${userId}`);
+    const targetUserId = parseInt(req.params.id as string);
+    const requesterId = (req as any).user?.userId;
+    const requesterRole = (req as any).user?.userType;
 
-    if (isNaN(userId)) {
+    if (isNaN(targetUserId)) {
         return res.status(400).json({ message: "Invalid user Id" });
     }
 
     try {
-        const user = await getUserByIdService(userId);
+        const user = await getUserByIdService(targetUserId);
         if (!user) {
-            console.warn(`User with ID ${userId} not found.`);
             return res.status(404).json({ message: "User not found" });
         }
-        console.log(`User ${userId} retrieved successfully.`);
-        res.status(200).json(user);
+
+        // --- SECURITY GATE ---
+        const isAdmin = requesterRole === 'admin';
+        const isSelf = requesterId === targetUserId;
+        const isAssignedPartner = requesterRole === 'support_partner' && user.partnerId === requesterId;
+
+        if (isAdmin || isSelf || isAssignedPartner) {
+            return res.status(200).json(user);
+        }
+
+        // If it fails, log the IDs to your terminal to debug the mismatch
+        console.warn(`🚨 [403 Forbidden]: Requester(ID:${requesterId}, Role:${requesterRole}) tried to access Patient(ID:${targetUserId}, AssignedPartnerID:${user.partnerId})`);
+
+        return res.status(403).json({
+            message: "Access Denied: You are not authorized to view this clinical profile."
+        });
     } catch (error: any) {
         next(error);
     }
 };
 
 export const createUserController = async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Attempting to create new user:", req.body.email);
-    const { userName, email, password, contactPhone, userType } = req.body;
-
-    if (!userName || !email || !password || !contactPhone || !userType) {
-        console.warn("User creation failed: Missing required fields.");
-        return res.status(400).json({ error: "Required fields are missing" });
-    }
-
     try {
         const resultMessage = await createUserService(req.body);
-        console.log("User created successfully:", email);
         res.status(201).json({ message: resultMessage });
     } catch (error: any) {
         next(error);
@@ -66,21 +86,10 @@ export const createUserController = async (req: Request, res: Response, next: Ne
 
 export const updateUserController = async (req: Request, res: Response, next: NextFunction) => {
     const userId = parseInt(req.params.id as string);
-    console.log(`Update request for user ID: ${userId}`);
-
-    if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user Id" });
-    }
+    if (isNaN(userId)) return res.status(400).json({ error: "Invalid user Id" });
 
     try {
-        const existingUser = await getUserByIdService(userId);
-        if (!existingUser) {
-            console.warn(`Update failed: User ${userId} does not exist.`);
-            return res.status(404).json({ message: "User not found" });
-        }
-
         const resultMessage = await updateUserService(userId, req.body);
-        console.log(`User ${userId} updated successfully.`);
         res.status(200).json({ message: resultMessage });
     } catch (error: any) {
         next(error);
@@ -89,15 +98,10 @@ export const updateUserController = async (req: Request, res: Response, next: Ne
 
 export const deleteUserController = async (req: Request, res: Response, next: NextFunction) => {
     const userId = parseInt(req.params.id as string);
-    console.log(`Delete request for user ID: ${userId}`);
-
-    if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user Id" });
-    }
+    if (isNaN(userId)) return res.status(400).json({ message: "Invalid user Id" });
 
     try {
         const resultMessage = await deleteUserServices(userId);
-        console.log(`User ${userId} deleted successfully.`);
         res.status(200).json({ message: resultMessage });
     } catch (error: any) {
         next(error);
@@ -106,23 +110,15 @@ export const deleteUserController = async (req: Request, res: Response, next: Ne
 
 export const handleUserCheckIn = async (req: Request, res: Response, next: NextFunction) => {
     const userId = parseInt(req.params.id as string);
-    console.log(`Streak increment request for user ID: ${userId}`);
-
-    if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user Id" });
-    }
+    if (isNaN(userId)) return res.status(400).json({ error: "Invalid user Id" });
 
     try {
         const [updatedUser] = await incrementUserStreakSmart(userId);
-        if (!updatedUser) {
-            console.warn(`Streak update failed: User ${userId} not found.`);
-            return res.status(404).json({ error: "User not found" });
-        }
+        if (!updatedUser) return res.status(404).json({ error: "User not found" });
 
-        console.log(`User ${userId} streak incremented to ${updatedUser.streak_days}.`);
-        res.status(200).json({ 
-            message: "Streak updated! Keep it up!", 
-            currentStreak: updatedUser.streak_days 
+        res.status(200).json({
+            message: "Streak updated!",
+            currentStreak: updatedUser.streak_days
         });
     } catch (error: any) {
         next(error);

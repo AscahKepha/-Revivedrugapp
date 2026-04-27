@@ -8,120 +8,162 @@ import {
 } from "./supportpartneractions.service";
 
 /**
- * GET /partner-actions
- * Fixed: Now dynamically filters based on the logged-in user's role
+ * GET /api/actions
+ * Provides filtered intervention history with real names for the UI.
  */
 export const getActionsController = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // @ts-ignore - Assuming bearAuth attaches user info to req.user
-        const { userId, role } = req.user;
+        const user = (req as any).user;
 
+        if (!user) {
+            console.error("❌ [GetActions]: Unauthorized - No user context");
+            return res.status(401).json({ error: "Unauthorized: User context missing" });
+        }
+
+        const requesterId = Number(user.userId);
+        const requesterRole = user.userType;
+
+        // 1. Fetch from Service (Now using explicit join)
         const allActions = await getSupportPartnerActionsServices();
 
+        console.log("🔍 [GetActions DEBUG]: Raw data from service (first record):", allActions?.[0]);
+
         if (!allActions || allActions.length === 0) {
-            return res.status(200).json([]); // Return empty array instead of 404 to avoid frontend crashes
+            console.log("ℹ️ [GetActions]: No records found in database.");
+            return res.status(200).json([]); 
         }
 
-        // ROLE-BASED FILTERING:
-        // If the user is a patient, only show actions where they are the recipient (userId)
-        if (role === 'patient') {
-            const patientActions = allActions.filter(action => action.userId === userId);
-            return res.status(200).json(patientActions);
+        // 2. Role-Based Filtering
+        let filteredActions;
+        if (requesterRole === 'patient') {
+            filteredActions = allActions.filter(action => Number(action.userId) === requesterId);
+        } else if (requesterRole === 'support_partner') {
+            filteredActions = allActions.filter(action => Number(action.partnerId) === requesterId);
+        } else {
+            filteredActions = allActions; // Admin sees all
         }
 
-        // If Admin or Support Partner, return all actions
-        return res.status(200).json(allActions);
+        // 3. UI Synchronization Fix
+        // This ensures the frontend always finds 'userName' even if the join varies
+        const responseData = filteredActions.map((action: any) => {
+            const finalName = action.userName || action.user?.userName || `Patient #${action.userId}`;
+            return {
+                ...action,
+                userName: finalName
+            };
+        });
+
+        console.log(`📊 [GetActions]: Sending ${responseData.length} records to ${requesterRole}. Sample Name: ${responseData[0]?.userName}`);
+        
+        return res.status(200).json(responseData);
+
     } catch (error: any) {
-        next(error);
+        console.error(" [GetActions Controller Error]:", error.message);
+        res.status(400).json({ error: "Failed to fetch intervention history" });
     }
 }
 
 /**
- * GET /partner-actions/:id
+ * GET /api/actions/:id
  */
 export const getActionsByIdController = async (req: Request, res: Response, next: NextFunction) => {
     const actionId = parseInt(req.params.id as string);
+    const user = (req as any).user;
+
+    console.log(`🔍 [GetActionsById]: Fetching ID ${actionId}`);
+
     if (isNaN(actionId)) {
-        return res.status(400).json({ error: "Invalid action Id" });
+        return res.status(400).json({ error: "Invalid action Id format" });
     }
 
     try {
         const action = await getSupportPartnerActionsByIdService(actionId);
 
-        // Security Check: Ensure a patient isn't trying to peek at another patient's intervention
-        // @ts-ignore
-        const { userId, role } = req.user;
-        if (role === 'patient' && action && action.userId !== userId) {
-            return res.status(403).json({ error: "Unauthorized access to this action" });
+        if (!action) {
+            console.warn(`⚠️ [GetActionsById]: Record ${actionId} not found`);
+            return res.status(404).json({ message: "Action record not found" });
         }
 
-        if (!action) {
-            return res.status(404).json({ message: "Action not found or doesn't exist" });
+        // Security Check
+        if (user?.userType === 'patient' && Number(action.userId) !== Number(user.userId)) {
+            console.error(`🚫 [Security]: Patient ${user.userId} tried to access record belonging to User ${action.userId}`);
+            return res.status(403).json({ error: "Unauthorized access" });
         }
+
         return res.status(200).json(action);
     } catch (error: any) {
+        console.error("❌ [GetActionsById Error]:", error.message);
         next(error);
     }
 }
 
 /**
- * POST /partner-actions
+ * POST /api/actions
  */
 export const createActionsController = async (req: Request, res: Response, next: NextFunction) => {
     const { partnerId, userId, success, actionDescription } = req.body;
 
+    console.log("📥 [CreateAction]: Received payload:", req.body);
+
     if (!partnerId || !userId || success === undefined || !actionDescription) {
-        return res.status(400).json({ error: "All fields are required" });
+        console.warn("⚠️ [CreateAction]: Validation failed - Missing fields");
+        return res.status(400).json({ error: "Required fields missing" });
     }
 
     try {
         const newAction = await createSupportPartnerActionsService({
-            partnerId, userId, success, actionDescription
+            partnerId: Number(partnerId),
+            userId: Number(userId),
+            success: Boolean(success),
+            actionDescription: actionDescription.trim()
         });
 
+        console.log(`✅ [CreateAction]: Successfully logged intervention for User ${userId}`);
         return res.status(201).json({
             message: "Action logged successfully ✅",
             data: newAction
         });
     } catch (error: any) {
+        console.error("❌ [CreateAction Error]:", error.message);
+        if (error.message.includes('foreign key')) {
+            return res.status(400).json({ error: "Relation Error: Patient or Partner ID does not exist." });
+        }
         next(error);
     }
 }
 
 /**
- * PUT /partner-actions/:id
+ * PUT /api/actions/:id
  */
 export const updateActionsController = async (req: Request, res: Response, next: NextFunction) => {
     const actionId = parseInt(req.params.id as string);
-    const { partnerId, userId, success, actionDescription } = req.body;
+    console.log(`🔄 [UpdateAction]: Updating record ${actionId}`);
+
+    if (isNaN(actionId)) return res.status(400).json({ error: "Invalid ID" });
 
     try {
-        const updatedAction = await updateSupportPartnerActionsServices(actionId, {
-            partnerId, userId, success, actionDescription
-        });
-
-        if (!updatedAction) {
-            return res.status(404).json({ message: "Action not found or failed to update" });
-        }
-
-        return res.status(200).json({
-            message: "Action updated successfully",
-            data: updatedAction
-        });
+        const message = await updateSupportPartnerActionsServices(actionId, req.body);
+        console.log(`✅ [UpdateAction]: Success for ID ${actionId}`);
+        return res.status(200).json({ message, actionId });
     } catch (error: any) {
+        console.error("❌ [UpdateAction Error]:", error.message);
         next(error);
     }
 }
 
 /**
- * DELETE /partner-actions/:id
+ * DELETE /api/actions/:id
  */
 export const deleteActionsController = async (req: Request, res: Response, next: NextFunction) => {
     const actionId = parseInt(req.params.id as string);
+    console.log(`🗑️ [DeleteAction]: Deleting record ${actionId}`);
+
     try {
-        await deleteSupportPartnerActionsServices(actionId);
-        return res.status(200).json({ message: "Action deleted successfully" });
+        const message = await deleteSupportPartnerActionsServices(actionId);
+        console.log(`✅ [DeleteAction]: Success for ID ${actionId}`);
+        return res.status(200).json({ message });
     } catch (error: any) {
+        console.error("❌ [DeleteAction Error]:", error.message);
         next(error);
     }
 }

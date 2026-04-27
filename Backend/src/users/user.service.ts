@@ -1,21 +1,29 @@
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
 import db from "../drizzle/db";
 import { userTable, TUserInsert } from "../drizzle/schema";
 
-// ✅ Using 'as const' solves the ts(2322) error by telling TS these are literal keys
+// This object maps to the 'relations' defined in your schema
 const userWithRelations = {
     checkins: true,
     riskScores: true,
-    supportPartners: true,
+    supportPartners: true, // This is the 'many' relation
+    assignedPartner: true, // This is the 'one' relation we just added
     supportPartnerActions: true,
     messages: true,
 } as const;
 
-// ✅ We use 'any' or a custom interface because the default TUserSelect 
-// does not include the nested arrays returned by the 'with' query.
-export const getUserServices = async (): Promise<any[]> => {
+/**
+ * getUserServices: Fetches users with relations.
+ */
+export const getUserServices = async (partnerId?: number): Promise<any[]> => {
     return await db.query.userTable.findMany({
         orderBy: [desc(userTable.userId)],
+        where: partnerId 
+            ? and(
+                eq(userTable.partnerId, partnerId), 
+                eq(userTable.userType, 'patient')
+              )
+            : undefined,
         with: userWithRelations,
     });
 };
@@ -34,7 +42,11 @@ export const createUserService = async (userData: TUserInsert): Promise<string> 
 
 export const updateUserService = async (userId: number, userData: Partial<TUserInsert>): Promise<string> => {
     await db.update(userTable)
-        .set({ ...userData, updatedAt: new Date() })
+        .set({ 
+            ...userData, 
+            // Using sql`now()` ensures the DB timestamp is used
+            updatedAt: new Date() 
+        })
         .where(eq(userTable.userId, userId));
     return "User Updated Successfully 😎";
 };
@@ -45,8 +57,7 @@ export const deleteUserServices = async (userId: number): Promise<string> => {
 };
 
 /**
- * Smartly increments streak and updates the longest_streak record
- * if the current streak exceeds it.
+ * Smartly increments streak and updates the longest_streak record.
  */
 export const incrementUserStreakSmart = async (userId: number) => {
     return await db.update(userTable)
@@ -64,7 +75,7 @@ export const incrementUserStreakSmart = async (userId: number) => {
 };
 
 /**
- * Resets the streak to 0 (useful for missed check-ins)
+ * Resets the streak to 0.
  */
 export const resetUserStreak = async (userId: number): Promise<string> => {
     await db.update(userTable)

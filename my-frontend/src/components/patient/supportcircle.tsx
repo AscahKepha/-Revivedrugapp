@@ -143,7 +143,7 @@ const SupportCircle = () => {
                 <Button 
                   onClick={handleSOS}
                   disabled={isSendingSOS}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-900/20 disabled:bg-gray-800"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-900/20 disabled:bg-gray-800"
                 >
                   {isSendingSOS ? "Signaling..." : "Signal for Help"}
                 </Button>

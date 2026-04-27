@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useGetAllUsersProfilesQuery } from '../../features/api/userApi';
 import { useGetSupportPartnersQuery, useDeleteSupportPartnerMutation } from '../../features/api/partnerApi';
 import { type SupportPartner } from '../../types/index';
-import { type UserProfile } from '../../features/auth/authSlice';
+import { type UserProfile }  from '../../features/auth/authSlice';
 import { Trash2, ShieldCheck, User as UserIcon, Phone } from 'lucide-react';
 
 const SupportNetwork: React.FC = () => {

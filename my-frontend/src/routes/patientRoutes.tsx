@@ -4,13 +4,13 @@ import ProtectedRoute from "../protectedRoutes";
 import PatientLayout from "../layouts/patientLayout";
 
 // Pages
-import CheckinPage from "../components/patientdashboard/checkinpage";
-import PatientDashboard from "../components/patientdashboard/PatientDashboard";
-import ScorePage from "../components/patientdashboard/scorepage";
-import SupportCircle from "../components/patientdashboard/supportcircle";
+import CheckinPage from "../components/patient/checkinpage";
+import PatientDashboard from "../components/patient/PatientDashboard";
+import ScorePage from "../components/patient/scorepage";
+import SupportCircle from "../components/patient/supportcircle";
 
 // Import the profile page we just finished updating
-import UserProfilePage from "../components/profile/profile"; 
+import UserProfilePage from "../components/profile/profile";
 
 const PatientGuard = () => {
   return <ProtectedRoute allowedRole="patient" />;

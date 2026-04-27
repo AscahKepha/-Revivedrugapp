@@ -14,11 +14,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // 2. Updated colors to match your Red/White branding
     const variants = {
-      default: "bg-red-600 text-white hover:bg-red-700 shadow-sm", // Main Drug-Revive Red
-      outline: "border-2 border-red-600 text-red-600 hover:bg-red-50", 
-      danger: "bg-gray-900 text-white hover:bg-red-600", // Perfect for Logout
+      default: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
+      outline: "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50", 
+      danger: "bg-gray-900 text-white hover:bg-emerald-600",
       ghost: "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
-      support: "bg-emerald-500 text-white hover:bg-emerald-600", // For Support Partner actions
+      support: "bg-emerald-500 text-white hover:bg-emerald-600",
     };
 
     const sizes = {

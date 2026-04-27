@@ -6,14 +6,13 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 /**
  * userApi: Dedicated to User Management & Profile Actions
- * (Auth logic like Login/Register is handled in authApi)
  */
 export const userApi = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
     baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
-      // Pull token from the auth state to satisfy the backend's bearAuth middleware
+      // Pull token from auth state for bearAuth middleware
       const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
@@ -24,7 +23,11 @@ export const userApi = createApi({
   tagTypes: ['User'],
   endpoints: (builder) => ({
     
-    // GET /users - Restricted to Admin (adminRoleAuth)
+    /**
+     * GET /users
+     * - Admin: Returns all users.
+     * - Support Partner: Returns assigned patients.
+     */
     getAllUsersProfiles: builder.query<UserProfile[], void>({
       query: () => 'users',
       providesTags: (result) =>
@@ -36,13 +39,13 @@ export const userApi = createApi({
           : [{ type: 'User', id: 'LIST' }],
     }),
 
-    // GET /users/:id - Accessible by User or Admin (allRoleAuth)
+    // GET /users/:id - Accessible by User, Partner, or Admin
     getUserById: builder.query<UserProfile, number>({
       query: (userId) => `users/${userId}`,
       providesTags: (_result, _error, id) => [{ type: 'User', id }],
     }),
 
-    // POST /users - Create User via Admin dashboard (adminRoleAuth)
+    // POST /users - Create User (Admin only)
     createNewUserByAdmin: builder.mutation<{ message: string }, Partial<UserProfile>>({
       query: (userData) => ({
         url: 'users', 
@@ -52,7 +55,7 @@ export const userApi = createApi({
       invalidatesTags: [{ type: 'User', id: 'LIST' }],
     }),
 
-    // PUT /users/:id - Update profile (allRoleAuth)
+    // PUT /users/:id - Update profile
     updateUser: builder.mutation<
       { message: string }, 
       Partial<UserProfile> & { userId: number }
@@ -68,7 +71,7 @@ export const userApi = createApi({
       ],
     }),
 
-    // DELETE /users/:id - Restricted to Admin (adminRoleAuth)
+    // DELETE /users/:id - Admin only
     deleteUser: builder.mutation<{ message: string }, number>({
       query: (userId) => ({
         url: `users/${userId}`,
@@ -77,7 +80,7 @@ export const userApi = createApi({
       invalidatesTags: [{ type: 'User', id: 'LIST' }],
     }),
 
-    // PATCH /users/:id/checkin - Streak Increment (allRoleAuth)
+    // PATCH /users/:id/checkin - Streak Increment
     performCheckIn: builder.mutation<{ message: string; currentStreak: number }, number>({
       query: (userId) => ({
         url: `users/${userId}/checkin`,
@@ -85,7 +88,7 @@ export const userApi = createApi({
       }),
       invalidatesTags: (_result, _error, userId) => [
         { type: 'User', id: userId },
-        { type: 'User', id: 'LIST' }
+        { type: 'User', id: 'LIST' } // Invalidates list to refresh streak counts in UI
       ],
     }),
   }),

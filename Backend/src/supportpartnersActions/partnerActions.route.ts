@@ -1,46 +1,39 @@
 import { Router } from "express";
-import { 
-    getActionsController, 
-    getActionsByIdController, 
-    createActionsController, 
-    deleteActionsController, 
-    updateActionsController 
+import {
+    getActionsController,
+    getActionsByIdController,
+    createActionsController,
+    deleteActionsController,
+    updateActionsController
 } from "./partnerAction.controller";
-import { 
-    adminRoleAuth, 
-    supportPartnerRoleAuth, 
-    allRoleAuth 
+import {
+    adminRoleAuth,
+    supportPartnerRoleAuth,
+    allRoleAuth
 } from "../middleware/bearAuth";
 
 export const ActionsRouter = Router();
 
 /**
- * GET /actions
- * UPDATED: Changed from adminRoleAuth to allRoleAuth.
- * This allows Patients and Partners to see the "Intervention Score" page.
+ * Route Management for Support Partner Interventions
+ * Note: These paths assume the router is mounted at '/api' or '/api/actions' in app.ts
  */
-ActionsRouter.get('/actions', allRoleAuth, getActionsController);
 
-/**
- * GET /actions/:id
- * Access: allRoleAuth (Viewing a specific intervention detail)
- */
-ActionsRouter.get('/actions/:id', allRoleAuth, getActionsByIdController);
+// URL: GET /api/actions
+// UPDATED: allRoleAuth so Patients can see their "Recovery Pulse" and Partners can see history.
+ActionsRouter.get('/', allRoleAuth, getActionsController);
 
-/**
- * POST /actions
- * Access: supportPartnerRoleAuth (Only partners log interventions)
- */
-ActionsRouter.post('/actions', supportPartnerRoleAuth, createActionsController);
+// URL: GET /api/actions/:id
+ActionsRouter.get('/:id', allRoleAuth, getActionsByIdController);
 
-/**
- * PUT /actions/:id
- * Access: supportPartnerRoleAuth (Partners can update their own notes)
- */
-ActionsRouter.put('/actions/:id', supportPartnerRoleAuth, updateActionsController);
+// URL: POST /api/actions
+// Access: supportPartnerRoleAuth (Only partners log interventions)
+ActionsRouter.post('/', supportPartnerRoleAuth, createActionsController);
 
-/**
- * DELETE /actions/:id
- * Access: adminRoleAuth (Only admins can hard-delete logs)
- */
-ActionsRouter.delete('/actions/:id', adminRoleAuth, deleteActionsController);
+// URL: PUT /api/actions/:id
+// Access: supportPartnerRoleAuth (Partners can update their specific intervention notes)
+ActionsRouter.put('/:id', supportPartnerRoleAuth, updateActionsController);
+
+// URL: DELETE /api/actions/:id
+// Access: adminRoleAuth (Hard-deleting clinical logs is an Admin-only privilege)
+ActionsRouter.delete('/:id', adminRoleAuth, deleteActionsController);

@@ -4,7 +4,7 @@ import {
     TCheckinSelect, 
     TCheckinInsert, 
     riskScoreTable, 
-    userTable // Imported to fetch live streak
+    userTable 
 } from "../drizzle/schema";
 import db from "../drizzle/db";
 
@@ -57,7 +57,6 @@ export const getCheckinStatsByUserIdService = async (userId: number) => {
             .limit(1);
 
         // 5. Calculate "Today Logged" status
-        // Fix for TS(2769): Handle null/undefined createdAt safely
         const latestEntry = recentEntries[0];
         const firstEntryDate = latestEntry?.createdAt ? new Date(latestEntry.createdAt) : null;
         
@@ -67,7 +66,7 @@ export const getCheckinStatsByUserIdService = async (userId: number) => {
         return {
             totalLogs: Number(totalResult[0]?.count) || 0,
             lastWeekCount: Number(weeklyResult[0]?.count) || 0,
-            userStreak: userResult[0]?.streak || 0, // Injected live streak data
+            userStreak: userResult[0]?.streak || 0,
             isTodayLogged,
             todayNote: isTodayLogged ? recentEntries[0]?.notes : "",
             previousNote: isTodayLogged ? (recentEntries[1]?.notes || "") : (recentEntries[0]?.notes || ""),
@@ -80,7 +79,6 @@ export const getCheckinStatsByUserIdService = async (userId: number) => {
 
 /**
  * RISK SCORE SERVICE
- * Saves calculated risk assessment metrics to the database.
  */
 export const createRiskScoreService = async (data: RiskScoreData) => {
     try {
@@ -101,9 +99,22 @@ export const createRiskScoreService = async (data: RiskScoreData) => {
 /**
  * STANDARD CRUD SERVICES
  */
+
+// Fetches ALL checkins (Used by Admin Action Logs)
 export const getcheckinServices = async (): Promise<TCheckinSelect[] | null> => {
     return await db.query.checkinTable.findMany({
         orderBy: desc(checkinTable.checkinId),
+        with: {
+            user: true // Pulling user details for the logs
+        }
+    });
+}
+
+// Fetches check-ins for a SPECIFIC patient (Used by Clinical View / PatientDetailView)
+export const getCheckinsByPatientIdService = async (userId: number): Promise<TCheckinSelect[]> => {
+    return await db.query.checkinTable.findMany({
+        where: eq(checkinTable.userId, userId),
+        orderBy: desc(checkinTable.createdAt)
     });
 }
 

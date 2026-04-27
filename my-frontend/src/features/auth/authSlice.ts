@@ -8,13 +8,11 @@ interface AuthState {
   userType: UserRole | null;
 }
 
-// Helper to safely parse localStorage
 const getStoredUser = (): UserProfile | null => {
   try {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   } catch (error) {
-    console.error("Failed to parse user from localStorage", error);
     return null;
   }
 };
@@ -30,10 +28,6 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    /**
-     * Called automatically by authApi (via onQueryStarted) 
-     * on successful Login or Registration.
-     */
     setCredentials: (state, action: PayloadAction<{ user: UserProfile; token: string }>) => {
       const { user, token } = action.payload;
       
@@ -42,22 +36,28 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.userType = user.userType;
 
-      // Persistence Layer
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("userType", user.userType);
     },
 
     /**
-     * Clears all auth data. Use this for Logout buttons.
+     * Updates the user object in state and storage without touching the token.
+     * Useful after profile updates or streak increments.
      */
+    updateUser: (state, action: PayloadAction<UserProfile>) => {
+      state.user = action.payload;
+      state.userType = action.payload.userType;
+      localStorage.setItem("user", JSON.stringify(action.payload));
+      localStorage.setItem("userType", action.payload.userType);
+    },
+
     clearCredentials: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
       state.userType = null;
 
-      // Wipe persistence
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("userType");
@@ -65,5 +65,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { setCredentials, clearCredentials } = authSlice.actions;
+export const { setCredentials, updateUser, clearCredentials } = authSlice.actions;
 export default authSlice.reducer;

@@ -5,28 +5,31 @@ import {
     createCheckinsController, 
     deleteCheckinsController, 
     updateCheckinsController,
-    getCheckinStatsController // Import the new stats controller
+    getCheckinStatsController 
 } from "./checkins.controller";
 import { 
     adminRoleAuth, 
     patientRoleAuth, 
-    allRoleAuth 
+    allRoleAuth,
+    supportPartnerRoleAuth // Ensure this is imported or use allRoleAuth
 } from "../middleware/bearAuth";
 
 export const CheckinsRouter = Router();
 
 /**
  * GET /checkins/stats/:userId
- * Access: allRoleAuth (Patients see their stats, Partners check up on them)
- * This feeds the "Recovery Pulse" metrics on the frontend.
+ * Access: allRoleAuth (Patients see their own, Partners check up on them)
  */
 CheckinsRouter.get('/checkins/stats/:userId', allRoleAuth, getCheckinStatsController);
 
 /**
  * GET /checkins
- * Access: Admin only
+ * Access: Updated to allRoleAuth
+ * Logic: 
+ * - Admin sees ALL logs.
+ * - Support Partner uses ?patientId=XX to see specific patient history.
  */
-CheckinsRouter.get('/checkins', adminRoleAuth, getCheckinsController);
+CheckinsRouter.get('/checkins', allRoleAuth, getCheckinsController);
 
 /**
  * GET /checkins/:id
@@ -37,18 +40,17 @@ CheckinsRouter.get('/checkins/:id', allRoleAuth, getCheckinsByIdController);
 /**
  * POST /checkins
  * Access: patientRoleAuth
- * Triggers risk calculation and streak updates
  */
 CheckinsRouter.post('/checkins', patientRoleAuth, createCheckinsController);
 
 /**
  * PUT /checkins/:id
- * Access: Admin only
+ * Access: adminRoleAuth (Only admins should edit clinical records)
  */
 CheckinsRouter.put('/checkins/:id', adminRoleAuth, updateCheckinsController);
 
 /**
  * DELETE /checkins/:id
- * Access: Admin only
+ * Access: adminRoleAuth (Only admins can purge records)
  */
 CheckinsRouter.delete('/checkins/:id', adminRoleAuth, deleteCheckinsController);

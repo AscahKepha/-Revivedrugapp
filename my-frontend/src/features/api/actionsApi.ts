@@ -6,13 +6,14 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 /**
  * supportActionsApi: Manages support partner intervention logs.
- * Restricted by adminRoleAuth, supportPartnerRoleAuth, and allRoleAuth.
+ * Synchronized with 'ActionsRouter' mounted at /api/actions in the backend.
  */
 export const supportActionsApi = createApi({
   reducerPath: 'supportActionsApi',
   baseQuery: fetchBaseQuery({
     baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
+      // Pull token from auth state for bearAuth middleware
       const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
@@ -22,38 +23,52 @@ export const supportActionsApi = createApi({
   }),
   tagTypes: ['SupportAction'],
   endpoints: (builder) => ({
-    
-    // GET /actions - Restricted to Admin
+
+    /**
+     * GET /api/actions
+     * Fetches historical interventions. 
+     * Backend handles role-based filtering (Admin vs Partner vs Patient).
+     */
     getActions: builder.query<SupportAction[], void>({
       query: () => 'actions',
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ actionId }) => ({ type: 'SupportAction' as const, id: actionId })),
-              { type: 'SupportAction', id: 'LIST' },
-            ]
+            ...result.map(({ actionId }) => ({ type: 'SupportAction' as const, id: actionId })),
+            { type: 'SupportAction', id: 'LIST' },
+          ]
           : [{ type: 'SupportAction', id: 'LIST' }],
     }),
 
-    // GET /actions/:id - Accessible via allRoleAuth
+    /**
+     * GET /api/actions/:id
+     */
     getActionById: builder.query<SupportAction, number>({
       query: (id) => `actions/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'SupportAction', id }],
     }),
 
-    // POST /actions - Restricted to Support Partner
-    createAction: builder.mutation<string, CreateActionRequest>({
+    /**
+     * POST /api/actions
+     * Logs a new intervention note.
+     * Invalidates 'LIST' to force the ActionCenter history to refresh.
+     */
+    createAction: builder.mutation<{ message: string; data: SupportAction }, CreateActionRequest>({
       query: (newAction) => ({
         url: 'actions',
         method: 'POST',
         body: newAction,
       }),
-      // Invalidate the list so the new intervention shows up immediately
       invalidatesTags: [{ type: 'SupportAction', id: 'LIST' }],
     }),
 
-    // PUT /actions/:id - Restricted to Support Partner
-    updateAction: builder.mutation<string, { id: number; data: Partial<CreateActionRequest> }>({
+    /**
+     * PUT /api/actions/:id
+     */
+    updateAction: builder.mutation<
+      { message: string; data: SupportAction },
+      { id: number; data: Partial<CreateActionRequest> }
+    >({
       query: ({ id, data }) => ({
         url: `actions/${id}`,
         method: 'PUT',
@@ -65,7 +80,9 @@ export const supportActionsApi = createApi({
       ],
     }),
 
-    // DELETE /actions/:id - Restricted to Admin
+    /**
+     * DELETE /api/actions/:id
+     */
     deleteAction: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `actions/${id}`,

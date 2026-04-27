@@ -28,20 +28,21 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // 3. API Routes
-app.use('/api', userRouter);
-app.use('/api', ActionsRouter);
+// -------------------------------------------------------------------------
+// Standardizing mount points to avoid 404 pathing collisions.
+// Each router will now handle its own sub-paths relative to these mounts.
+// -------------------------------------------------------------------------
+app.use('/api/users', userRouter);          // Endpoints start with /api/users
+app.use('/api/auth', authRouter);            // Endpoints start with /api/auth
+app.use('/api/actions', ActionsRouter);
 app.use('/api', SupportPartnerRouter);
 app.use('/api', RiskScoreRouter);
 app.use('/api', MessagesRouter);
 app.use('/api', CheckinsRouter);
 app.use('/api', ChatRoomsRouter);
-app.use('/api/auth', authRouter);
 
 /**
  * 4. 404 Route Handler
- * Explicitly removing the '*' or '(.*)' path. 
- * When no path is provided, Express 5 matches all requests that 
- * haven't been caught by previous routes.
  */
 app.use((req: Request, res: Response) => {
     res.status(404).json({
@@ -51,20 +52,17 @@ app.use((req: Request, res: Response) => {
 
 /**
  * 5. Global Error Handling Middleware
- * Catch-all for all errors passed via next(error) from your controllers.
  */
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    // Log the error for internal debugging
     console.error(`[Error] ${req.method} ${req.url}:`, message);
 
     res.status(statusCode).json({
         status: "error",
         statusCode,
         message,
-        // Shows the stack trace only when you are in development mode
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 });

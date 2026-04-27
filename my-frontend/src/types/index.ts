@@ -1,3 +1,6 @@
+/**
+ * CHECK-IN TYPES
+ */
 export interface Checkin {
   checkinId: number;
   userId: number;
@@ -33,6 +36,10 @@ export interface CheckinResponse {
   };
 }
 
+/**
+ * SUPPORT PARTNER ACTION TYPES
+ * Used by the Action Center to log interventions.
+ */
 export interface SupportAction {
   actionId: number;
   partnerId: number;
@@ -43,11 +50,13 @@ export interface SupportAction {
 }
 
 export interface CreateActionRequest {
-  partnerId: number;
-  userId: number;
+  partnerId: number; 
+  userId: number; 
   success: boolean;
   actionDescription: string;
 }
+
+
 
 export interface ChatRoom {
   roomId: number;
@@ -73,9 +82,12 @@ export interface Message {
 export interface CreateMessageRequest {
   roomId: number;
   message: string;
-  // userId and sender are handled by the backend auth middleware
+  // userId and sender are typically handled by backend bearAuth
 }
 
+/**
+ * SUPPORT PARTNER PROFILE TYPES
+ */
 export interface SupportPartner {
   partnerId: number;
   userId: number;
@@ -93,18 +105,17 @@ export interface CreatePartnerRequest {
   relationship: string;
 }
 
-export interface SupportAction {
-  actionId: number;
-  partnerId: number;
+/**
+ * USER MANAGEMENT TYPES
+ */
+export interface User {
   userId: number;
-  success: boolean;
-  actionDescription: string;
+  userName: string;
+  email: string;
+  contactPhone: string;
+  userType: 'patient' | 'support_partner' | 'admin';
+  partnerId?: number | null; // The ID of the partner checking up on this user
+  streak_days?: number;
+  last_checkin?: string;
   createdAt?: string;
-}
-
-export interface CreateActionRequest {
-  partnerId: number;
-  userId: number;
-  success: boolean;
-  actionDescription: string;
 }

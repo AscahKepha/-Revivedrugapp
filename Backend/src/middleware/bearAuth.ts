@@ -4,16 +4,17 @@ import { Request, Response, NextFunction } from "express";
 
 dotenv.config();
 
-// Define the shape of your JWT payload
+// 1. Define the shape of your JWT payload
 export type DecodedToken = {
     userId: number;
     email: string;
-    userType: "admin" | "patient" | "support_partner"; // Strict typing from your schema
+    userType: "admin" | "patient" | "support_partner"; 
     userName: string;
     exp: number;
 };
 
-// Extend the Express Request type to include the user
+// 2. Extend the Express Request type to include the user property
+// This allows you to access req.user in your controllers without type errors
 declare global {
     namespace Express {
         interface Request {
@@ -22,17 +23,19 @@ declare global {
     }
 }
 
-// Authentication helper
+// 3. Authentication helper
 export const verifyToken = (token: string, secret: string): DecodedToken | null => {
     try {
-        const decoded = jwt.verify(token, secret) as DecodedToken;
-        return decoded;
+        return jwt.verify(token, secret) as DecodedToken;
     } catch (error) {
         return null;
     }
 };
 
-// Core Authorization Middleware
+/**
+ * 4. Core Authorization Middleware
+ * Manages token extraction, verification, and role-based access control.
+ */
 export const authMiddleware = async (
     req: Request, 
     res: Response, 
@@ -41,41 +44,44 @@ export const authMiddleware = async (
 ) => {
     const authHeader = req.header('Authorization');
     
-    // 1. Check if header exists
+    // Check if header exists
     if (!authHeader) {
-        res.status(401).json({ error: "Authorization header is missing" });
-        return;
+        return res.status(401).json({ error: "Authorization header is missing" });
     }
 
-    // 2. Handle "Bearer <token>" format
-    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
+    // Handle "Bearer <token>" format or raw token
+    const parts = authHeader.split(" ");
+    const token = parts.length === 2 && parts[0] === "Bearer" ? parts[1] : parts[0];
 
-    // 3. Verify Token
+    // Verify Token
     const decodedToken = verifyToken(token, process.env.JWT_SECRET as string);
 
     if (!decodedToken) {
-        res.status(401).json({ error: "Invalid or expired token" });
-        return;
+        return res.status(401).json({ error: "Invalid or expired token" });
     }
 
     const userType = decodedToken.userType;
 
-    // 4. Role Authorization Logic
-    const hasAccess = 
-        requiredRole === "all" || 
-        userType === requiredRole;
+    // Role Authorization Logic
+    // Access is granted if role matches OR if the endpoint is open to 'all' authenticated users
+    const hasAccess = requiredRole === "all" || userType === requiredRole;
 
     if (hasAccess) {
-        // FIX: Use single '=' for assignment, not '==='
+        // SUCCESS: Assign decoded data to req.user for use in controllers
         req.user = decodedToken; 
-        next();
-        return;
-    } else {
-        res.status(403).json({ error: "Forbidden: You do not have permission to access this resource" });
-    }
+        return next(); // Return here to ensure no further code in this function runs
+    } 
+
+    // FAILURE: Correct role not found
+    return res.status(403).json({ 
+        error: `Forbidden: This resource requires ${requiredRole} privileges.` 
+    });
 };
 
-// Role-specific wrappers
+/**
+ * 5. Role-specific wrappers
+ * These are used in your router files (e.g., router.get('/', adminRoleAuth, controller))
+ */
 export const adminRoleAuth = (req: Request, res: Response, next: NextFunction) => 
     authMiddleware(req, res, next, "admin");
 
